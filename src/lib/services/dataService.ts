@@ -1,6 +1,6 @@
 import { createClient as createBrowserSupabase, isSupabaseConfigured } from '@/lib/supabase/client';
 import { Client, Cycle, ClassSession, CycleStatus, ClassStatus } from '@/types/database';
-import { getCycleLimits } from '@/lib/cycleGenerator';
+import { getCycleLimits, addDays, generateCycleSchedule } from '@/lib/cycleGenerator';
 
 const DEMO_STORAGE_KEY = 'ciclo_app_demo_data_v1';
 
@@ -559,4 +559,42 @@ export async function updateCycleStatus(cycleId: string, status: CycleStatus): P
 
   saveLocalData(local);
   return local.cycles[index];
+}
+
+export async function renewCycle(oldCycleId: string): Promise<Cycle> {
+  const details = await getCycleWithDetails(oldCycleId);
+  if (!details) throw new Error('Ciclo original no encontrado');
+
+  const { cycle } = details;
+
+  // Marcar ciclo anterior como archivado
+  await updateCycleStatus(oldCycleId, 'archived');
+
+  // Calcular la fecha de inicio del nuevo ciclo (semana 5 / día 28 tras el inicio anterior)
+  const newStartDate = addDays(cycle.start_date, 28);
+
+  // Generar las nuevas clases
+  const newSchedule = generateCycleSchedule(
+    newStartDate,
+    cycle.plan_classes,
+    cycle.frequency,
+    cycle.schedule_days
+  );
+
+  return await createCycleWithClasses(
+    {
+      client_id: cycle.client_id,
+      plan_classes: cycle.plan_classes,
+      frequency: cycle.frequency,
+      start_date: newStartDate,
+      schedule_days: cycle.schedule_days,
+      schedule_time: cycle.schedule_time || undefined,
+      price: cycle.price || undefined,
+      notes: `Renovación de ciclo anterior (${cycle.start_date})`,
+    },
+    newSchedule.map((c) => ({
+      class_number: c.classNumber,
+      scheduled_date: c.scheduledDate,
+    }))
+  );
 }

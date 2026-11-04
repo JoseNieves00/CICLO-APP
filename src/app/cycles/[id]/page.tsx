@@ -1,16 +1,19 @@
 'use client';
 
 import React, { useState, useEffect, useMemo, use } from 'react';
+import { useRouter } from 'next/navigation';
 import Header from '@/components/navigation/Header';
 import BottomNav from '@/components/navigation/BottomNav';
 import MarkClassModal from '@/components/cycles/MarkClassModal';
 import PaymentReminderModal from '@/components/cycles/PaymentReminderModal';
+import ShareCycleModal from '@/components/cycles/ShareCycleModal';
 import {
   getCycleWithDetails,
   updateClassStatus,
   toggleCyclePayment,
   updateCycleStatus,
   updateClient,
+  renewCycle,
 } from '@/lib/services/dataService';
 import { Cycle, Client, ClassSession, ClassStatus, CycleStatus } from '@/types/database';
 import {
@@ -44,6 +47,7 @@ export default function CycleDetailPage({
 }) {
   const resolvedParams = use(params);
   const cycleId = resolvedParams.id;
+  const router = useRouter();
 
   const [cycle, setCycle] = useState<Cycle | null>(null);
   const [client, setClient] = useState<Client | null>(null);
@@ -52,12 +56,35 @@ export default function CycleDetailPage({
   const [selectedClass, setSelectedClass] = useState<ClassSession | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+  const [shareTab, setShareTab] = useState<'schedule' | 'compliance'>('schedule');
   const [togglingPayment, setTogglingPayment] = useState(false);
+  const [renewing, setRenewing] = useState(false);
 
   const handleUpdatePhone = async (newPhone: string) => {
     if (!client) return;
     const updated = await updateClient(client.id, { phone: newPhone });
     setClient(updated);
+  };
+
+  const handleRenewCycle = async () => {
+    if (!cycle || !client) return;
+    if (
+      !confirm(
+        `¿Deseas cerrar este ciclo y generar la renovación para el próximo mes con ${client.student_name}? Se copiará el plan, horario y precio.`
+      )
+    )
+      return;
+
+    try {
+      setRenewing(true);
+      const newCycle = await renewCycle(cycle.id);
+      router.push(`/cycles/${newCycle.id}`);
+    } catch (err: unknown) {
+      alert(err instanceof Error ? err.message : 'Error al renovar ciclo');
+    } finally {
+      setRenewing(false);
+    }
   };
 
   const loadData = async () => {
@@ -443,39 +470,62 @@ export default function CycleDetailPage({
           </p>
         </div>
 
-        {/* Share buttons (Ready for Phase 4) */}
+        {/* Share buttons */}
         <div className="bg-slate-900/90 border border-slate-800 rounded-3xl p-4 space-y-3">
           <div className="flex items-center justify-between text-xs font-semibold text-slate-300">
             <span className="flex items-center gap-1.5">
               <Share2 className="w-3.5 h-3.5 text-indigo-400" />
-              <span>Compartir con el Cliente</span>
+              <span>Compartir con el Cliente (Imágenes WhatsApp)</span>
             </span>
-            <span className="text-[10px] text-indigo-400 font-normal">Fase 4</span>
+            <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-bold">
+              PNG
+            </span>
           </div>
 
           <div className="grid grid-cols-2 gap-2 text-xs">
             <button
-              onClick={() =>
-                alert(
-                  'Fase 4: El generador de imágenes creará la tarjeta PNG de programación con las fechas tentativas y abrirá el menú nativo de WhatsApp.'
-                )
-              }
-              className="p-3 rounded-2xl bg-indigo-600/20 hover:bg-indigo-600/30 border border-indigo-500/30 text-indigo-200 font-medium text-center transition-colors"
+              type="button"
+              onClick={() => {
+                setShareTab('schedule');
+                setIsShareModalOpen(true);
+              }}
+              className="p-3 rounded-2xl bg-indigo-600/20 hover:bg-indigo-600/30 border border-indigo-500/30 text-indigo-200 font-semibold text-center transition-all flex items-center justify-center gap-1.5 shadow-sm"
             >
-              Compartir Programación
+              <span>Compartir Programación</span>
             </button>
 
             <button
-              onClick={() =>
-                alert(
-                  'Fase 4: El generador de imágenes creará la tarjeta PNG de cumplimiento (clases dadas vs programadas, diferencia en días) lista para WhatsApp.'
-                )
-              }
-              className="p-3 rounded-2xl bg-emerald-600/20 hover:bg-emerald-600/30 border border-emerald-500/30 text-emerald-200 font-medium text-center transition-colors"
+              type="button"
+              onClick={() => {
+                setShareTab('compliance');
+                setIsShareModalOpen(true);
+              }}
+              className="p-3 rounded-2xl bg-emerald-600/20 hover:bg-emerald-600/30 border border-emerald-500/30 text-emerald-200 font-semibold text-center transition-all flex items-center justify-center gap-1.5 shadow-sm"
             >
-              Compartir Cumplimiento
+              <span>Compartir Cumplimiento</span>
             </button>
           </div>
+        </div>
+
+        {/* Renewal Section (Fase 3: Cierre y Renovación de ciclo con un toque) */}
+        <div className="p-4 rounded-3xl bg-slate-900/60 border border-slate-800 flex items-center justify-between gap-3">
+          <div>
+            <h4 className="text-xs font-bold text-white flex items-center gap-1.5">
+              <Sparkles className="w-3.5 h-3.5 text-indigo-400" />
+              <span>Renovación de Ciclo</span>
+            </h4>
+            <p className="text-[11px] text-slate-400 mt-0.5">
+              Archiva este ciclo y abre el del siguiente mes copiando plan, días y precio.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={handleRenewCycle}
+            disabled={renewing}
+            className="px-3.5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold shadow-md shadow-indigo-600/25 transition-all flex-shrink-0 disabled:opacity-50"
+          >
+            {renewing ? 'Renovando...' : 'Renovar Mes ↻'}
+          </button>
         </div>
       </main>
 
@@ -494,6 +544,16 @@ export default function CycleDetailPage({
         client={client}
         cycle={cycle}
         onUpdatePhone={handleUpdatePhone}
+      />
+
+      {/* Modal for generating and sharing images */}
+      <ShareCycleModal
+        isOpen={isShareModalOpen}
+        onClose={() => setIsShareModalOpen(false)}
+        client={client}
+        cycle={cycle}
+        classes={classes}
+        initialTab={shareTab}
       />
 
       <BottomNav />
