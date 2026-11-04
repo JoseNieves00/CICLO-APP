@@ -259,7 +259,7 @@ export default function SettingsPage() {
             Ciclo App • Versión 1.0.0
           </p>
           <p className="text-[10px] text-slate-600">
-            Sistema listo para producción
+            Desarrollado por <a href="https://synqo.dev" target="_blank" rel="noopener noreferrer" className="text-indigo-400 hover:text-indigo-300 font-semibold">synqo.dev</a>
           </p>
         </div>
         </div>
