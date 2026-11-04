@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#4f46e5" />
+      <stop offset="100%" stop-color="#10b981" />
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="12" stdDeviation="16" flood-color="#000000" flood-opacity="0.4" />
+    </filter>
+  </defs>
+  
+  <!-- Background rounded squircle -->
+  <rect width="512" height="512" rx="128" fill="#020617" />
+  <rect width="500" height="500" x="6" y="6" rx="124" fill="none" stroke="#1e293b" stroke-width="4" />
+  
+  <!-- Outer rotating cycle track -->
+  <circle cx="256" cy="256" r="160" fill="none" stroke="url(#grad)" stroke-width="24" stroke-linecap="round" stroke-dasharray="720 280" filter="url(#shadow)" />
+  
+  <!-- Center Music / Class Icon -->
+  <path d="M220 180 v140 a36 36 0 1 1 -24 -34 v-86 l110 -24 v110 a36 36 0 1 1 -24 -34 v-92 z" fill="#ffffff" />
+  
+  <!-- Small glowing nodes -->
+  <circle cx="256" cy="96" r="14" fill="#10b981" />
+  <circle cx="416" cy="256" r="14" fill="#6366f1" />
+</svg>

@@ -342,6 +342,26 @@ export async function getCycleWithDetails(
   return { cycle, client, classes };
 }
 
+export async function getClasses(cycleId?: string): Promise<ClassSession[]> {
+  if (isSupabaseConfigured()) {
+    const supabase = createBrowserSupabase();
+    let query = supabase.from('classes').select('*').order('scheduled_date', { ascending: true });
+    if (cycleId) {
+      query = query.eq('cycle_id', cycleId);
+    }
+    const { data, error } = await query;
+    if (error) throw error;
+    return (data as ClassSession[]) || [];
+  }
+
+  const local = getLocalData();
+  let list = [...local.classes];
+  if (cycleId) {
+    list = list.filter((cl) => cl.cycle_id === cycleId);
+  }
+  return list.sort((a, b) => a.scheduled_date.localeCompare(b.scheduled_date));
+}
+
 export async function createCycleWithClasses(
   cycleData: {
     client_id: string;

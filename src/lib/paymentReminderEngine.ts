@@ -262,3 +262,4 @@ export function evaluateCycleReminder(cycle: Cycle, now: Date = new Date()): Cyc
     suggestedTemplateId: 'recordatorio_cordial',
   };
 }
+

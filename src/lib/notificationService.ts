@@ -92,8 +92,8 @@ export function checkAndSendLocalReminderNotification(
   try {
     const notification = new Notification('🔔 Recordatorio de Cobro • Ciclo App', {
       body,
-      icon: '/icon-192.png',
-      badge: '/icon-192.png',
+      icon: '/icon.svg',
+      badge: '/icon.svg',
       tag: 'ciclo-payment-reminder',
     });
 
@@ -109,3 +109,4 @@ export function checkAndSendLocalReminderNotification(
     return { notified: false, count: dueCycles.length, reason: 'Fallo al disparar notificación' };
   }
 }
+

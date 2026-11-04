@@ -49,7 +49,7 @@ export default function LoginPage() {
         if (error) {
           setErrorMsg(error.message);
         } else {
-          setSuccessMsg('¡Cuenta creada con éxito! Si Supabase requiere confirmación por email, revisa tu bandeja de entrada.');
+          setSuccessMsg('¡Cuenta creada con éxito! Si se requiere confirmación por email, revisa tu bandeja de entrada.');
           setMode('signin');
         }
       }
@@ -212,7 +212,7 @@ export default function LoginPage() {
           {/* Security footnote */}
           <div className="mt-6 pt-5 border-t border-slate-800 text-center">
             <p className="text-[11px] text-slate-500">
-              Datos protegidos por usuario con Row Level Security (RLS) en Supabase Postgres.
+              Acceso seguro y datos de alumnos protegidos en la nube.
             </p>
           </div>
         </div>

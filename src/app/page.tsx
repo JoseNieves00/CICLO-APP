@@ -134,7 +134,7 @@ export default function HomePage() {
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col">
       <Header
         title="Ciclo App"
-        subtitle={isConfigured ? (user?.email || 'Conectado a Supabase') : 'Modo Local / Demo'}
+        subtitle={user?.email || 'Control de Clases'}
       />
 
       <main className="flex-1 max-w-md mx-auto w-full px-4 py-4 space-y-4 pb-24">
@@ -319,7 +319,7 @@ export default function HomePage() {
         ) : (
           <div className="p-3.5 rounded-2xl bg-slate-900/50 border border-slate-800 text-xs text-slate-400 flex items-center gap-2.5">
             <CheckCircle2 className="w-4 h-4 text-emerald-400 flex-shrink-0" />
-            <span>No hay cobros pendientes para hoy. ¡Todo al día!</span>
+            <span>No hay cobros pendientes en semana final para hoy. ¡Todo al día!</span>
           </div>
         )}
 

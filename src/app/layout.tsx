@@ -17,6 +17,10 @@ export const metadata: Metadata = {
   title: "Ciclo App - Control de Clases y Reposiciones",
   description: "Aplicación móvil para control de ciclos de clases, reposiciones, pagos y reportes compartibles.",
   manifest: "/manifest.json",
+  icons: {
+    icon: "/icon.svg",
+    apple: "/icon.svg",
+  },
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
