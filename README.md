@@ -1,68 +1,70 @@
 # Ciclo App 📱
 
-> Aplicativo web móvil (Next.js + Tailwind + Supabase Postgres) para el control integral de ciclos de clases, reposiciones, pagos y generación de imágenes compartibles para clientes.
+> Aplicativo web móvil y tablet (Next.js + Tailwind + Supabase Postgres) para el control integral de ciclos de clases, reposiciones, cobros inteligentes y generación de imágenes compartibles para clientes.
 
 ---
 
-## 🚀 Fase 1: Base y Configuración (Completada)
+## 🚀 Estado de la Versión 1.0 (Producción)
 
-Esta primera fase establece la base técnica y de seguridad de la aplicación:
-1. **Proyecto Next.js (App Router)** configurado con Tailwind CSS y preparado como PWA para agregarse a la pantalla de inicio del celular.
-2. **Supabase Client & Auth**: Clientes de navegador y servidor con `@supabase/ssr` y manejo de cookies y sesiones.
-3. **Esquema de Base de Datos Postgres (`supabase/schema.sql`)**:
-   - `clients`: Alumnos, acudientes y teléfonos.
-   - `cycles`: Planes de 4 u 8 clases, frecuencia (1 o 2/semana), fechas, días, control de pago y estados (`active`, `in_reposicion`, `completed`, `expired_pending`, `archived`).
-   - `classes`: Clases individuales, fecha programada, fecha dada, estado (`scheduled`, `completed`, `cancelled`, `rescheduled`), horas y reposiciones.
-   - **Row Level Security (RLS)**: Reglas de seguridad activadas en cada tabla con aislamiento por `owner_id = auth.uid()`.
-   - **Vista calculada `cycle_summary`**: Resume clases dadas, restantes, canceladas y fechas límite de semanas 4 y 5.
-4. **Pantalla de Autenticación (`/login`)**:
-   - Inicio de sesión y registro de usuario.
-   - Diseño mobile-first con modo oscuro optimizado para celular.
-5. **Navegación Móvil**: Barra inferior fija (`Hoy`, `Clientes`, `Nuevo Ciclo`, `Ajustes`).
+Todas las fases esenciales han sido implementadas, verificadas y optimizadas para producción:
+
+- [x] **Fase 1: Base & Seguridad**: Next.js App Router, Supabase Postgres, autenticación, aislamiento multi-usuario con RLS (`owner_id = auth.uid()`).
+- [x] **Fase 2: Núcleo**: Gestión de clientes, generador automático de ciclos (Clase 1 en fecha exacta, 4 semanas regulares y Semana 5 de reposición) y marcado de clases con fechas reales y motivos.
+- [x] **Fase 3: Control y Cobros**: Reposiciones, control de pago mensual, renovación de ciclo con 1 toque.
+- [x] **Fase 4: Imágenes y WhatsApp**: Generación de tarjetas PNG de alta resolución (*Programación* y *Cumplimiento*) con Web Share API, formato accesible en 12 horas AM/PM y plantillas pre-redactadas.
+- [x] **Fase 5: Motor Inteligente y PWA**:
+  - Alertas automáticas solo a partir de la **Semana 4** del ciclo.
+  - Horario moderado (9:00 AM – 7:00 PM) para proteger tiempos de descanso.
+  - Frecuencia moderada de 3 días para no saturar al cliente.
+  - Web Notifications API en el dispositivo.
+  - Respaldo de datos con exportación completa a `.CSV` (Excel).
+  - Ícono SVG oficial y manifiesto PWA para instalación en celulares.
+  - Optimización completa para pantallas de tablet / iPad (layout responsivo en 2 columnas).
 
 ---
 
-## 🛠️ Instrucciones para Conectar Supabase
+## 📌 Próxima Versión (v2.0) - Tareas Planificadas
 
-### 1. Ejecutar el esquema SQL
-1. Abre tu proyecto en [Supabase Dashboard](https://app.supabase.com).
-2. Ve a la sección **SQL Editor** en la barra lateral.
-3. Crea una **New query**.
-4. Copia y pega el contenido del archivo [`supabase/schema.sql`](supabase/schema.sql) y haz clic en **Run**.
+Las siguientes funcionalidades quedan formalmente programadas como prioritarias para la siguiente iteración:
 
-### 2. Configurar variables de entorno
-Crea o edita tu archivo `.env.local` en la raíz del proyecto:
-```env
-NEXT_PUBLIC_SUPABASE_URL=https://tu-proyecto.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=tu-anon-key-de-supabase
-NEXT_PUBLIC_SITE_URL=http://localhost:3000
-```
-> Encuentras estos valores en Supabase en: **Project Settings -> API**.
+### 1. Portal Web para el Alumno / Acudiente
+- **Objetivo:** Permitir que el acudiente o alumno pueda consultar en vivo el estado de su ciclo, fechas programadas, reposiciones y progreso sin necesidad de reenviarle imágenes cada vez.
+- **Alcance previsto:**
+  - Enlace único o código PIN seguro por alumno (ej. `/portal/[token]`).
+  - Vista de sólo lectura optimizada para móviles con el calendario de clases y clases restantes.
+  - Opción de solicitar reprogramación o avisar inasistencia con antelación desde el portal.
+
+### 2. Sincronización con Google Calendar / Apple Calendar
+- **Objetivo:** Reflejar automáticamente las clases programadas y reposiciones en la app de calendario nativa del celular del docente y del alumno.
+- **Alcance previsto:**
+  - Botón de descarga de archivo `.ics` por ciclo o clase individual.
+  - Enlace de suscripción webcal (`webcal://...`) para que las clases se actualicen automáticamente en Google Calendar, Apple Calendar u Outlook.
+  - Alarmas automáticas 1 hora antes de cada clase.
 
 ---
 
 ## 💻 Desarrollo Local
 
 ```bash
-# Iniciar el servidor de desarrollo
+# Iniciar servidor de desarrollo
 npm run dev
 
-# Compilar para producción
+# Compilar para producción (utiliza webpack para compatibilidad de dependencias)
 npm run build
 
 # Iniciar servidor de producción
 npm run start
 ```
 
-Abre en tu navegador o celular [http://localhost:3000](http://localhost:3000).
-
 ---
 
-## 🗺️ Hoja de Ruta de Fases
+## 🛠️ Variables de Entorno (Producción)
 
-- [x] **Fase 1: Base** (Next.js, Supabase, Login, Tablas, RLS, Mobile Shell)
-- [ ] **Fase 2: Núcleo** (Gestión de clientes, generador automático de ciclos con días/fechas y marcar clases)
-- [ ] **Fase 3: Control** (Gestión de semana de reposición, control de pago mensual, cierre y renovación con 1 toque)
-- [ ] **Fase 4: Imágenes y Compartir** (Generación de PNG con `html-to-image` y Web Share API para WhatsApp)
-- [ ] **Fase 5: Pulido** (PWA con icono nativo, vista "Hoy" con clases del día, alertas y exportación CSV)
-- [ ] **Fase 6: Migración** (Importación inicial desde CSV de Sheets)
+En Vercel o tu hosting de preferencia, agrega:
+```env
+NEXT_PUBLIC_SUPABASE_URL=https://tu-proyecto.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=tu-anon-key-de-supabase
+NEXT_PUBLIC_SITE_URL=https://tu-dominio.com
+```
+
+Desarrollado con arquitectura escalable y mobile-first.
