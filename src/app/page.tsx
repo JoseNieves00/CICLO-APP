@@ -3,11 +3,12 @@
 import React, { useState, useEffect } from 'react';
 import Header from '@/components/navigation/Header';
 import BottomNav from '@/components/navigation/BottomNav';
-import MarkClassModal from '@/components/cycles/MarkClassModal';
+import PaymentReminderModal from '@/components/cycles/PaymentReminderModal';
 import { useAuth } from '@/context/AuthContext';
-import { getClients, getCycles, getCycleWithDetails, updateClassStatus } from '@/lib/services/dataService';
-import { Client, Cycle, ClassSession, ClassStatus } from '@/types/database';
+import { getClients, getCycles, updateClient } from '@/lib/services/dataService';
+import { Client, Cycle } from '@/types/database';
 import { formatFriendlyDate } from '@/lib/cycleGenerator';
+import { formatCurrency } from '@/lib/whatsappTemplates';
 import {
   CalendarCheck2,
   Users,
@@ -22,6 +23,7 @@ import {
   ChevronRight,
   CheckCircle2,
   DollarSign,
+  MessageCircle,
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -30,8 +32,12 @@ export default function HomePage() {
   const [clients, setClients] = useState<Client[]>([]);
   const [cycles, setCycles] = useState<Cycle[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedClass, setSelectedClass] = useState<ClassSession | null>(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  // States for payment reminder modal
+  const [reminderModalData, setReminderModalData] = useState<{
+    client: Client;
+    cycle: Cycle;
+  } | null>(null);
 
   const loadDashboardData = async () => {
     try {
@@ -52,6 +58,13 @@ export default function HomePage() {
   useEffect(() => {
     loadDashboardData();
   }, []);
+
+  const handleUpdatePhone = async (newPhone: string) => {
+    if (!reminderModalData) return;
+    const updated = await updateClient(reminderModalData.client.id, { phone: newPhone });
+    setClients((prev) => prev.map((c) => (c.id === updated.id ? updated : c)));
+    setReminderModalData((prev) => (prev ? { ...prev, client: updated } : null));
+  };
 
   const activeCycles = cycles.filter(
     (c) => c.status === 'active' || c.status === 'in_reposicion'
@@ -75,7 +88,7 @@ export default function HomePage() {
                 <span>Modo Demostración / Local Activo</span>
               </div>
               <p className="text-[11px] text-amber-200/90 leading-tight">
-                Puedes probar la gestión de clientes, generador y clases ahora mismo. Tus datos se guardan en el navegador.
+                Puedes gestionar clientes, ciclos y enviar cobros por WhatsApp ahora mismo.
               </p>
             </div>
             <Link
@@ -138,6 +151,54 @@ export default function HomePage() {
             <p className="text-[10px] text-slate-500 mt-0.5">Clientes por pagar</p>
           </div>
         </div>
+
+        {/* Recordatorios de Cobro Pendiente (WhatsApp Notification Banner) */}
+        {pendingPayments.length > 0 && (
+          <div className="bg-gradient-to-br from-amber-950/40 via-slate-900/90 to-slate-900 border border-amber-500/30 rounded-3xl p-4 space-y-3 shadow-lg">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-1.5 text-xs font-bold text-amber-300">
+                <AlertTriangle className="w-4 h-4 text-amber-400" />
+                <span>Recordatorios de Cobro ({pendingPayments.length})</span>
+              </div>
+              <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 font-semibold">
+                WhatsApp
+              </span>
+            </div>
+
+            <div className="space-y-2">
+              {pendingPayments.map((cy) => {
+                const client = clients.find((c) => c.id === cy.client_id);
+                if (!client) return null;
+
+                return (
+                  <div
+                    key={cy.id}
+                    className="p-3 rounded-2xl bg-slate-950/70 border border-slate-800/80 flex items-center justify-between gap-2 text-xs"
+                  >
+                    <div className="min-w-0 flex-1">
+                      <div className="font-bold text-white truncate">
+                        {client.student_name}
+                      </div>
+                      <div className="text-[11px] text-slate-400 truncate">
+                        {client.guardian_name ? `${client.guardian_name} • ` : ''}
+                        {cy.price ? formatCurrency(cy.price) : `Plan ${cy.plan_classes} clases`}
+                      </div>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => setReminderModalData({ client, cycle: cy })}
+                      className="flex-shrink-0 inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs shadow-md shadow-emerald-600/20 transition-all"
+                    >
+                      <MessageCircle className="w-3.5 h-3.5" />
+                      <span>Cobrar</span>
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
         {/* Active Cycles Section */}
         <div className="space-y-2.5">
@@ -216,6 +277,17 @@ export default function HomePage() {
           )}
         </div>
       </main>
+
+      {/* Modal for sending WhatsApp payment reminder */}
+      {reminderModalData && (
+        <PaymentReminderModal
+          isOpen={Boolean(reminderModalData)}
+          onClose={() => setReminderModalData(null)}
+          client={reminderModalData.client}
+          cycle={reminderModalData.cycle}
+          onUpdatePhone={handleUpdatePhone}
+        />
+      )}
 
       <BottomNav />
     </div>

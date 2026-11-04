@@ -4,7 +4,8 @@ import React, { useState, useEffect } from 'react';
 import Header from '@/components/navigation/Header';
 import BottomNav from '@/components/navigation/BottomNav';
 import NewClientModal from '@/components/clients/NewClientModal';
-import { getClients, getCycles } from '@/lib/services/dataService';
+import PaymentReminderModal from '@/components/cycles/PaymentReminderModal';
+import { getClients, getCycles, updateClient } from '@/lib/services/dataService';
 import { Client, Cycle } from '@/types/database';
 import {
   Users,
@@ -15,6 +16,7 @@ import {
   CalendarCheck2,
   ChevronRight,
   MessageCircle,
+  AlertTriangle,
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -24,6 +26,10 @@ export default function ClientsPage() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [reminderData, setReminderData] = useState<{
+    client: Client;
+    cycle: Cycle;
+  } | null>(null);
 
   const loadData = async () => {
     try {
@@ -47,6 +53,13 @@ export default function ClientsPage() {
 
   const handleClientCreated = (newClient: Client) => {
     setClients((prev) => [newClient, ...prev]);
+  };
+
+  const handleUpdatePhone = async (newPhone: string) => {
+    if (!reminderData) return;
+    const updated = await updateClient(reminderData.client.id, { phone: newPhone });
+    setClients((prev) => prev.map((c) => (c.id === updated.id ? updated : c)));
+    setReminderData((prev) => (prev ? { ...prev, client: updated } : null));
   };
 
   const filteredClients = clients.filter(
@@ -147,18 +160,33 @@ export default function ClientsPage() {
                       )}
                     </div>
 
-                    {/* WhatsApp Action button if phone available */}
-                    {cleanPhone && (
-                      <a
-                        href={`https://wa.me/${cleanPhone}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="p-2 rounded-xl bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 transition-colors"
-                        title="Enviar WhatsApp"
-                      >
-                        <MessageCircle className="w-4 h-4" />
-                      </a>
-                    )}
+                    <div className="flex items-center gap-1.5">
+                      {/* Cobro pendiente WhatsApp button if applicable */}
+                      {activeCycle && !activeCycle.is_paid && (
+                        <button
+                          type="button"
+                          onClick={() => setReminderData({ client, cycle: activeCycle })}
+                          className="px-2 py-1 rounded-xl bg-amber-500/15 border border-amber-500/30 text-amber-300 hover:bg-amber-500/25 transition-colors text-[10px] font-semibold flex items-center gap-1"
+                          title="Enviar cobro por WhatsApp"
+                        >
+                          <MessageCircle className="w-3.5 h-3.5 text-emerald-400" />
+                          <span>Cobrar</span>
+                        </button>
+                      )}
+
+                      {/* Regular WhatsApp contact button */}
+                      {cleanPhone && (
+                        <a
+                          href={`https://wa.me/${cleanPhone}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="p-2 rounded-xl bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 transition-colors"
+                          title="Escribir por WhatsApp"
+                        >
+                          <MessageCircle className="w-4 h-4" />
+                        </a>
+                      )}
+                    </div>
                   </div>
 
                   {/* Cycle Status or Add Cycle */}
@@ -210,6 +238,16 @@ export default function ClientsPage() {
         onClose={() => setIsModalOpen(false)}
         onClientCreated={handleClientCreated}
       />
+
+      {reminderData && (
+        <PaymentReminderModal
+          isOpen={Boolean(reminderData)}
+          onClose={() => setReminderData(null)}
+          client={reminderData.client}
+          cycle={reminderData.cycle}
+          onUpdatePhone={handleUpdatePhone}
+        />
+      )}
 
       <BottomNav />
     </div>

@@ -4,11 +4,13 @@ import React, { useState, useEffect, useMemo, use } from 'react';
 import Header from '@/components/navigation/Header';
 import BottomNav from '@/components/navigation/BottomNav';
 import MarkClassModal from '@/components/cycles/MarkClassModal';
+import PaymentReminderModal from '@/components/cycles/PaymentReminderModal';
 import {
   getCycleWithDetails,
   updateClassStatus,
   toggleCyclePayment,
   updateCycleStatus,
+  updateClient,
 } from '@/lib/services/dataService';
 import { Cycle, Client, ClassSession, ClassStatus, CycleStatus } from '@/types/database';
 import {
@@ -49,7 +51,14 @@ export default function CycleDetailPage({
   const [loading, setLoading] = useState(true);
   const [selectedClass, setSelectedClass] = useState<ClassSession | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
   const [togglingPayment, setTogglingPayment] = useState(false);
+
+  const handleUpdatePhone = async (newPhone: string) => {
+    if (!client) return;
+    const updated = await updateClient(client.id, { phone: newPhone });
+    setClient(updated);
+  };
 
   const loadData = async () => {
     try {
@@ -253,36 +262,51 @@ export default function CycleDetailPage({
         </div>
 
         {/* Payment Control Switch */}
-        <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div
-              className={`w-10 h-10 rounded-xl flex items-center justify-center transition-colors ${
+        <div className="bg-slate-900/80 border border-slate-800 rounded-3xl p-4 space-y-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div
+                className={`w-10 h-10 rounded-2xl flex items-center justify-center transition-colors ${
+                  cycle.is_paid
+                    ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
+                    : 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
+                }`}
+              >
+                <DollarSign className="w-5 h-5" />
+              </div>
+              <div>
+                <h4 className="text-xs font-bold text-white">Pago del Mes</h4>
+                <p className="text-[11px] text-slate-400">
+                  {cycle.is_paid ? 'Marcado como PAGADO' : 'Pendiente de cobro'}
+                </p>
+              </div>
+            </div>
+
+            <button
+              onClick={handleTogglePayment}
+              disabled={togglingPayment}
+              className={`px-3.5 py-2 rounded-xl text-xs font-semibold transition-all shadow-md ${
                 cycle.is_paid
-                  ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
-                  : 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
+                  ? 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-emerald-600/20'
+                  : 'bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700'
               }`}
             >
-              <DollarSign className="w-5 h-5" />
-            </div>
-            <div>
-              <h4 className="text-xs font-bold text-white">Pago del Mes</h4>
-              <p className="text-[11px] text-slate-400">
-                {cycle.is_paid ? 'Marcado como PAGADO' : 'Pendiente de pago'}
-              </p>
-            </div>
+              {cycle.is_paid ? 'Pagado ✓' : 'Marcar Pago'}
+            </button>
           </div>
 
-          <button
-            onClick={handleTogglePayment}
-            disabled={togglingPayment}
-            className={`px-3.5 py-2 rounded-xl text-xs font-semibold transition-all shadow-md ${
-              cycle.is_paid
-                ? 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-emerald-600/20'
-                : 'bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700'
-            }`}
-          >
-            {cycle.is_paid ? 'Pagado ✓' : 'Marcar Pago'}
-          </button>
+          {!cycle.is_paid && (
+            <div className="pt-2 border-t border-slate-800/80">
+              <button
+                type="button"
+                onClick={() => setIsPaymentModalOpen(true)}
+                className="w-full py-2.5 px-3 rounded-xl bg-emerald-600/15 hover:bg-emerald-600/25 border border-emerald-500/30 text-emerald-300 text-xs font-semibold flex items-center justify-center gap-2 transition-all shadow-sm"
+              >
+                <MessageCircle className="w-4 h-4 text-emerald-400" />
+                <span>Enviar Recordatorio de Cobro a WhatsApp</span>
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Classes List */}
@@ -463,7 +487,17 @@ export default function CycleDetailPage({
         onSave={handleSaveClass}
       />
 
+      {/* Modal for sending WhatsApp payment reminder */}
+      <PaymentReminderModal
+        isOpen={isPaymentModalOpen}
+        onClose={() => setIsPaymentModalOpen(false)}
+        client={client}
+        cycle={cycle}
+        onUpdatePhone={handleUpdatePhone}
+      />
+
       <BottomNav />
     </div>
   );
 }
+
