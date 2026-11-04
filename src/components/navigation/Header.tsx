@@ -46,3 +46,4 @@ export default function Header({ title = 'Ciclo App', subtitle }: HeaderProps) {
     </header>
   );
 }
+

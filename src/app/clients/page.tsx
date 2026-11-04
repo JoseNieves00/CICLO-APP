@@ -1,52 +1,215 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Header from '@/components/navigation/Header';
 import BottomNav from '@/components/navigation/BottomNav';
-import { Users, UserPlus, Sparkles } from 'lucide-react';
+import NewClientModal from '@/components/clients/NewClientModal';
+import { getClients, getCycles } from '@/lib/services/dataService';
+import { Client, Cycle } from '@/types/database';
+import {
+  Users,
+  UserPlus,
+  Search,
+  Phone,
+  CalendarPlus,
+  CalendarCheck2,
+  ChevronRight,
+  MessageCircle,
+} from 'lucide-react';
 import Link from 'next/link';
 
 export default function ClientsPage() {
+  const [clients, setClients] = useState<Client[]>([]);
+  const [cycles, setCycles] = useState<Cycle[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const loadData = async () => {
+    try {
+      setLoading(true);
+      const [fetchedClients, fetchedCycles] = await Promise.all([
+        getClients(),
+        getCycles(),
+      ]);
+      setClients(fetchedClients);
+      setCycles(fetchedCycles);
+    } catch (err) {
+      console.error('Error loading clients:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadData();
+  }, []);
+
+  const handleClientCreated = (newClient: Client) => {
+    setClients((prev) => [newClient, ...prev]);
+  };
+
+  const filteredClients = clients.filter(
+    (c) =>
+      c.student_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (c.guardian_name && c.guardian_name.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (c.phone && c.phone.includes(searchTerm))
+  );
+
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col">
-      <Header title="Clientes" subtitle="Gestión de alumnos y acudientes" />
+      <Header title="Clientes" subtitle="Alumnos y ciclos de clases" />
 
-      <main className="flex-1 max-w-md mx-auto w-full px-4 py-5 space-y-4 pb-24">
-        {/* Top Action */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-sm font-bold text-white">Directorio de Clientes</h2>
-            <p className="text-[11px] text-slate-400">Total: 0 registrados</p>
+      <main className="flex-1 max-w-md mx-auto w-full px-4 py-4 space-y-4 pb-24">
+        {/* Top Controls: Search + Add */}
+        <div className="flex items-center gap-2">
+          <div className="relative flex-1">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-500">
+              <Search className="w-4 h-4" />
+            </div>
+            <input
+              type="text"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder="Buscar por alumno o acudiente..."
+              className="w-full pl-9 pr-3 py-2 bg-slate-900/80 border border-slate-800 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500"
+            />
           </div>
+
           <button
-            disabled
-            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-indigo-600/30 text-indigo-300 text-xs font-medium cursor-not-allowed opacity-75"
+            onClick={() => setIsModalOpen(true)}
+            className="flex-shrink-0 inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-medium shadow-md shadow-indigo-600/20 transition-all"
           >
-            <UserPlus className="w-3.5 h-3.5" />
-            <span>Nuevo Cliente</span>
+            <UserPlus className="w-4 h-4" />
+            <span>Nuevo</span>
           </button>
         </div>
 
-        {/* Empty State / Phase 2 Preview */}
-        <div className="bg-slate-900/60 border border-slate-800 rounded-3xl p-8 text-center space-y-3 my-8">
-          <div className="w-12 h-12 rounded-2xl bg-indigo-600/10 border border-indigo-500/20 text-indigo-400 mx-auto flex items-center justify-center">
-            <Users className="w-6 h-6" />
+        {/* Content */}
+        {loading ? (
+          <div className="py-12 flex flex-col items-center justify-center">
+            <div className="w-8 h-8 border-2 border-indigo-500/30 border-t-indigo-500 rounded-full animate-spin mb-3" />
+            <p className="text-xs text-slate-400">Cargando clientes...</p>
           </div>
-          <h3 className="text-base font-semibold text-white">Aún no hay clientes registrados</h3>
-          <p className="text-xs text-slate-400 max-w-xs mx-auto">
-            Esta sección se activará en la <strong className="text-indigo-300">Fase 2 (Núcleo)</strong> para crear alumnos, asociar acudientes y teléfonos.
-          </p>
-          <div className="pt-2">
-            <Link
-              href="/"
-              className="inline-flex items-center gap-1.5 text-xs text-indigo-400 hover:text-indigo-300"
-            >
-              <Sparkles className="w-3.5 h-3.5" />
-              <span>Volver al resumen de Fase 1</span>
-            </Link>
+        ) : filteredClients.length === 0 ? (
+          <div className="bg-slate-900/50 border border-slate-800 rounded-3xl p-8 text-center space-y-3 my-4">
+            <div className="w-12 h-12 rounded-2xl bg-indigo-600/10 border border-indigo-500/20 text-indigo-400 mx-auto flex items-center justify-center">
+              <Users className="w-6 h-6" />
+            </div>
+            <h3 className="text-sm font-semibold text-white">
+              {searchTerm ? 'No se encontraron resultados' : 'No tienes clientes registrados aún'}
+            </h3>
+            <p className="text-xs text-slate-400 max-w-xs mx-auto">
+              {searchTerm
+                ? 'Intenta con otro término de búsqueda.'
+                : 'Registra a tu primer alumno y acudiente para programar su ciclo de clases.'}
+            </p>
+            {!searchTerm && (
+              <button
+                onClick={() => setIsModalOpen(true)}
+                className="mt-2 inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-medium"
+              >
+                <UserPlus className="w-3.5 h-3.5" />
+                <span>Registrar Primer Cliente</span>
+              </button>
+            )}
           </div>
-        </div>
+        ) : (
+          <div className="space-y-3">
+            <div className="flex items-center justify-between text-[11px] text-slate-400 px-1">
+              <span>{filteredClients.length} {filteredClients.length === 1 ? 'cliente' : 'clientes'}</span>
+              <span>Ciclo Actual</span>
+            </div>
+
+            {filteredClients.map((client) => {
+              // Buscar ciclo activo para este cliente
+              const activeCycle = cycles.find(
+                (c) => c.client_id === client.id && (c.status === 'active' || c.status === 'in_reposicion')
+              );
+
+              // Formatear WhatsApp URL si tiene teléfono
+              const cleanPhone = client.phone ? client.phone.replace(/[^0-9]/g, '') : null;
+
+              return (
+                <div
+                  key={client.id}
+                  className="bg-slate-900/70 border border-slate-800/80 hover:border-slate-700/80 rounded-2xl p-4 transition-all space-y-3"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex-1 min-w-0">
+                      <h4 className="text-sm font-bold text-white truncate">
+                        {client.student_name}
+                      </h4>
+                      {client.guardian_name && (
+                        <p className="text-xs text-slate-400 truncate mt-0.5">
+                          {client.guardian_name}
+                        </p>
+                      )}
+                    </div>
+
+                    {/* WhatsApp Action button if phone available */}
+                    {cleanPhone && (
+                      <a
+                        href={`https://wa.me/${cleanPhone}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="p-2 rounded-xl bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 transition-colors"
+                        title="Enviar WhatsApp"
+                      >
+                        <MessageCircle className="w-4 h-4" />
+                      </a>
+                    )}
+                  </div>
+
+                  {/* Cycle Status or Add Cycle */}
+                  <div className="pt-2 border-t border-slate-800/60 flex items-center justify-between text-xs">
+                    {activeCycle ? (
+                      <Link
+                        href={`/cycles/${activeCycle.id}`}
+                        className="flex-1 flex items-center justify-between group p-1.5 -m-1.5 rounded-lg hover:bg-slate-800/40 transition-colors"
+                      >
+                        <div className="flex items-center gap-2">
+                          <span
+                            className={`w-2 h-2 rounded-full ${
+                              activeCycle.status === 'in_reposicion'
+                                ? 'bg-amber-400 animate-pulse'
+                                : 'bg-emerald-400'
+                            }`}
+                          />
+                          <span className="font-medium text-slate-200">
+                            Plan {activeCycle.plan_classes} clases ({activeCycle.frequency}x sem)
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-1.5 text-indigo-400 text-[11px] group-hover:translate-x-0.5 transition-transform">
+                          <span>Ver ciclo</span>
+                          <ChevronRight className="w-3.5 h-3.5" />
+                        </div>
+                      </Link>
+                    ) : (
+                      <div className="w-full flex items-center justify-between">
+                        <span className="text-slate-500 text-[11px]">Sin ciclo activo</span>
+                        <Link
+                          href={`/cycles/new?clientId=${client.id}`}
+                          className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-indigo-600/15 border border-indigo-500/30 text-indigo-300 text-[11px] font-medium hover:bg-indigo-600/25 transition-colors"
+                        >
+                          <CalendarPlus className="w-3 h-3" />
+                          <span>Abrir Ciclo</span>
+                        </Link>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
       </main>
+
+      <NewClientModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onClientCreated={handleClientCreated}
+      />
 
       <BottomNav />
     </div>

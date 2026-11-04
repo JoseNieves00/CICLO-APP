@@ -188,3 +188,4 @@ from public.cycles c
 join public.clients cl on c.client_id = cl.id
 left join public.classes cls on c.id = cls.cycle_id
 group by c.id, cl.id;
+

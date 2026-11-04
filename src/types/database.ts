@@ -47,7 +47,6 @@ export interface Cycle {
   notes: string | null;
   created_at: string;
   updated_at: string;
-  // Campos unidos opcionales
   client?: Client;
   classes?: ClassSession[];
 }
@@ -99,36 +98,118 @@ export interface Database {
     Tables: {
       clients: {
         Row: Client;
-        Insert: Omit<Client, 'id' | 'created_at' | 'updated_at'> & {
+        Insert: {
           id?: string;
+          owner_id?: string;
+          guardian_name?: string | null;
+          student_name: string;
+          phone?: string | null;
+          email?: string | null;
+          notes?: string | null;
           created_at?: string;
           updated_at?: string;
         };
-        Update: Partial<Omit<Client, 'id' | 'owner_id'>>;
+        Update: {
+          id?: string;
+          owner_id?: string;
+          guardian_name?: string | null;
+          student_name?: string;
+          phone?: string | null;
+          email?: string | null;
+          notes?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
       };
       cycles: {
         Row: Cycle;
-        Insert: Omit<Cycle, 'id' | 'created_at' | 'updated_at'> & {
+        Insert: {
           id?: string;
+          owner_id?: string;
+          client_id: string;
+          plan_classes: 4 | 8;
+          frequency: 1 | 2;
+          start_date: string;
+          schedule_days: number[];
+          schedule_time?: string | null;
+          status?: CycleStatus;
+          is_paid?: boolean;
+          paid_at?: string | null;
+          price?: number | null;
+          notes?: string | null;
           created_at?: string;
           updated_at?: string;
         };
-        Update: Partial<Omit<Cycle, 'id' | 'owner_id'>>;
+        Update: {
+          id?: string;
+          owner_id?: string;
+          client_id?: string;
+          plan_classes?: 4 | 8;
+          frequency?: 1 | 2;
+          start_date?: string;
+          schedule_days?: number[];
+          schedule_time?: string | null;
+          status?: CycleStatus;
+          is_paid?: boolean;
+          paid_at?: string | null;
+          price?: number | null;
+          notes?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
       };
       classes: {
         Row: ClassSession;
-        Insert: Omit<ClassSession, 'id' | 'created_at' | 'updated_at'> & {
+        Insert: {
           id?: string;
+          owner_id?: string;
+          cycle_id: string;
+          class_number: number;
+          scheduled_date: string;
+          actual_date?: string | null;
+          status?: ClassStatus;
+          cancellation_reason?: string | null;
+          is_makeup?: boolean;
+          makeup_date?: string | null;
+          hours?: number;
+          notes?: string | null;
           created_at?: string;
           updated_at?: string;
         };
-        Update: Partial<Omit<ClassSession, 'id' | 'owner_id'>>;
+        Update: {
+          id?: string;
+          owner_id?: string;
+          cycle_id?: string;
+          class_number?: number;
+          scheduled_date?: string;
+          actual_date?: string | null;
+          status?: ClassStatus;
+          cancellation_reason?: string | null;
+          is_makeup?: boolean;
+          makeup_date?: string | null;
+          hours?: number;
+          notes?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
       };
     };
     Views: {
       cycle_summary: {
         Row: CycleSummary;
       };
+    };
+    Functions: {
+      [_ in never]: never;
+    };
+    Enums: {
+      [_ in never]: never;
+    };
+    CompositeTypes: {
+      [_ in never]: never;
     };
   };
 }
