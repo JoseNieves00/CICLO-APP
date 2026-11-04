@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { Cycle, Client, ClassSession } from '@/types/database';
-import { formatFriendlyDate, getCycleLimits, DAY_NAMES } from '@/lib/cycleGenerator';
+import { formatFriendlyDate, getCycleLimits, DAY_NAMES, formatTime12h } from '@/lib/cycleGenerator';
 
 interface ScheduleCardProps {
   client: Client;
@@ -43,11 +43,11 @@ export default function ScheduleCard({ client, cycle, classes }: ScheduleCardPro
       }}
       className="p-6 rounded-3xl border border-indigo-500/30 shadow-2xl space-y-4"
     >
-      {/* Brand Header */}
+      {/* Header */}
       <div className="flex items-center justify-between pb-3 border-b border-slate-800">
         <div>
           <span className="text-[10px] font-bold tracking-widest uppercase text-indigo-400">
-            CICLO APP • CONTROL DE CLASES
+            CONTROL DE CLASES
           </span>
           <h2 className="text-xl font-extrabold text-white tracking-tight">
             Programación de Clases
@@ -61,7 +61,7 @@ export default function ScheduleCard({ client, cycle, classes }: ScheduleCardPro
       {/* Student / Client Info */}
       <div className="p-3.5 rounded-2xl bg-slate-900/90 border border-slate-800 space-y-1">
         <div className="flex items-center justify-between">
-          <span className="text-xs text-slate-400 font-medium">Alumno:</span>
+          <span className="text-xs text-slate-400 font-medium">Alumn@:</span>
           <span className="text-sm font-bold text-white">{client.student_name}</span>
         </div>
         {client.guardian_name && (
@@ -79,7 +79,7 @@ export default function ScheduleCard({ client, cycle, classes }: ScheduleCardPro
         {cycle.schedule_time && (
           <div className="flex items-center justify-between text-xs">
             <span className="text-slate-400 font-medium">Horario habitual:</span>
-            <span className="text-slate-200">{cycle.schedule_time}</span>
+            <span className="text-slate-200 font-semibold">{formatTime12h(cycle.schedule_time)}</span>
           </div>
         )}
       </div>

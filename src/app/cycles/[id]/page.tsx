@@ -22,6 +22,7 @@ import {
   formatDaysDiff,
   getCycleLimits,
   DAY_NAMES,
+  formatTime12h,
 } from '@/lib/cycleGenerator';
 import {
   CalendarCheck2,
@@ -243,6 +244,7 @@ export default function CycleDetailPage({
           <div className="flex flex-wrap items-center gap-2 text-xs">
             <span className="px-2.5 py-1 rounded-xl bg-indigo-600/20 text-indigo-300 border border-indigo-500/30 font-medium">
               Plan {cycle.plan_classes} clases ({cycle.frequency}x sem)
+              {cycle.schedule_time ? ` • ${formatTime12h(cycle.schedule_time)}` : ''}
             </span>
 
             {/* Status Badge */}

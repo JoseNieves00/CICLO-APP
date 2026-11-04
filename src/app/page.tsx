@@ -242,7 +242,7 @@ export default function HomePage() {
                     <div className="flex items-start justify-between">
                       <div>
                         <h4 className="text-sm font-bold text-white group-hover:text-indigo-300 transition-colors">
-                          {client ? client.student_name : 'Alumno'}
+                          {client ? client.student_name : 'Alumn@'}
                         </h4>
                         <p className="text-xs text-slate-400 mt-0.5">
                           Plan {cy.plan_classes} clases ({cy.frequency}x sem) • Inicio:{' '}

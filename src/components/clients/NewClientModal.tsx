@@ -67,7 +67,7 @@ export default function NewClientModal({
         <div className="flex items-center justify-between pb-3 border-b border-slate-800">
           <div>
             <h3 className="text-base font-bold text-white">Nuevo Cliente</h3>
-            <p className="text-xs text-slate-400">Registra un alumno y su acudiente</p>
+            <p className="text-xs text-slate-400">Registra un(a) alumn@ y su acudiente</p>
           </div>
           <button
             onClick={onClose}
@@ -87,7 +87,7 @@ export default function NewClientModal({
         <form onSubmit={handleSubmit} className="space-y-3.5">
           <div>
             <label className="block text-xs font-medium text-slate-300 mb-1">
-              Nombre del Alumno <span className="text-indigo-400">*</span>
+              Nombre del Alumn@ <span className="text-indigo-400">*</span>
             </label>
             <div className="relative">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-500">

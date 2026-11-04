@@ -33,6 +33,23 @@ export const DAY_SHORT_NAMES: Record<number, string> = {
 /**
  * Convierte un objeto Date o string YYYY-MM-DD al día de la semana ISO (1=Lun, 7=Dom)
  */
+export function formatTime12h(timeStr: string | null | undefined): string {
+  if (!timeStr) return '';
+  const trimmed = timeStr.trim();
+  if (trimmed.toLowerCase().includes('am') || trimmed.toLowerCase().includes('pm')) {
+    return trimmed;
+  }
+  const parts = trimmed.split(':');
+  if (parts.length < 2) return trimmed;
+  let hours = parseInt(parts[0], 10);
+  const minutes = parts[1].slice(0, 2).padStart(2, '0');
+  if (isNaN(hours)) return trimmed;
+  const ampm = hours >= 12 ? 'PM' : 'AM';
+  hours = hours % 12;
+  if (hours === 0) hours = 12;
+  return `${hours}:${minutes} ${ampm}`;
+}
+
 export function getIsoDayOfWeek(dateStr: string): number {
   // Parsing YYYY-MM-DD to local date to avoid timezone shift
   const [year, month, day] = dateStr.split('-').map(Number);

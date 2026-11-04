@@ -95,7 +95,7 @@ export default function ClientDetailPage({
           <div className="flex items-start justify-between">
             <div>
               <span className="text-[10px] font-semibold text-indigo-400 uppercase tracking-wider">
-                Alumno
+                Alumn@
               </span>
               <h2 className="text-xl font-extrabold text-white">{client.student_name}</h2>
               {client.guardian_name && (

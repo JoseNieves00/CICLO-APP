@@ -15,6 +15,7 @@ import {
   formatFullDate,
   getIsoDayOfWeek,
   addDays,
+  formatTime12h,
 } from '@/lib/cycleGenerator';
 import {
   CalendarPlus,
@@ -223,7 +224,7 @@ function NewCycleForm() {
           {/* 1. Cliente */}
           <div className="bg-slate-900/80 border border-slate-800 rounded-3xl p-4 space-y-3">
             <label className="block text-xs font-semibold text-slate-200">
-              1. Selecciona el Alumno / Cliente
+              1. Selecciona el Alumn@ / Cliente
             </label>
 
             {loadingClients ? (
@@ -278,7 +279,14 @@ function NewCycleForm() {
               </div>
 
               <div>
-                <label className="block text-[10px] text-slate-400 mb-1">Hora Tentativa</label>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="block text-[10px] text-slate-400">Hora Tentativa</label>
+                  {scheduleTime && (
+                    <span className="text-[10px] font-bold text-indigo-400 bg-indigo-500/10 px-1.5 py-0.2 rounded">
+                      {formatTime12h(scheduleTime)}
+                    </span>
+                  )}
+                </div>
                 <input
                   type="time"
                   value={scheduleTime}
@@ -444,7 +452,7 @@ function NewCycleForm() {
                             </span>
                           </div>
                           <span className="text-[10px] text-slate-400">
-                            {c.dayName} {scheduleTime ? `• ${scheduleTime}` : ''}
+                            {c.dayName} {scheduleTime ? `• ${formatTime12h(scheduleTime)}` : ''}
                           </span>
                         </div>
                       ))}
