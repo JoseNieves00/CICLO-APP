@@ -67,4 +67,8 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=tu-anon-key-de-supabase
 NEXT_PUBLIC_SITE_URL=https://tu-dominio.com
 ```
 
-Desarrollado con arquitectura escalable y mobile-first.
+Desarrollado con arquitectura escalable y mobile-first. 
+
+
+
+Hola mundo!
