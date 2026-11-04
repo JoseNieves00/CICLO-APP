@@ -49,6 +49,7 @@ const INITIAL_DEMO_DATA: StoredData = {
       status: 'active',
       is_paid: true,
       paid_at: '2026-11-01T15:00:00Z',
+      last_reminder_at: null,
       price: 180000,
       notes: 'Ciclo de Noviembre',
       created_at: '2026-11-01T10:00:00Z',
@@ -418,6 +419,7 @@ export async function createCycleWithClasses(
     status: 'active',
     is_paid: false,
     paid_at: null,
+    last_reminder_at: null,
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
   };
@@ -528,6 +530,38 @@ export async function toggleCyclePayment(cycleId: string, isPaid: boolean): Prom
     is_paid: isPaid,
     paid_at: paidAt,
     updated_at: new Date().toISOString(),
+  };
+
+  saveLocalData(local);
+  return local.cycles[index];
+}
+
+export async function recordReminderSent(cycleId: string): Promise<Cycle> {
+  const sentAt = new Date().toISOString();
+
+  if (isSupabaseConfigured()) {
+    const supabase = createBrowserSupabase();
+    const { data, error } = await supabase
+      .from('cycles')
+      .update({
+        last_reminder_at: sentAt,
+        updated_at: sentAt,
+      })
+      .eq('id', cycleId)
+      .select()
+      .single();
+    if (error) throw error;
+    return data as Cycle;
+  }
+
+  const local = getLocalData();
+  const index = local.cycles.findIndex((c) => c.id === cycleId);
+  if (index === -1) throw new Error('Ciclo no encontrado');
+
+  local.cycles[index] = {
+    ...local.cycles[index],
+    last_reminder_at: sentAt,
+    updated_at: sentAt,
   };
 
   saveLocalData(local);

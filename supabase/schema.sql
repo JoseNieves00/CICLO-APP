@@ -54,6 +54,7 @@ create table if not exists public.cycles (
   ) default 'active',
   is_paid boolean not null default false,
   paid_at timestamptz,
+  last_reminder_at timestamptz,                 -- Registro del último recordatorio de cobro enviado
   price numeric(10, 2),                         -- Valor pagado o pactado
   notes text,
   created_at timestamptz not null default now(),
@@ -188,4 +189,11 @@ from public.cycles c
 join public.clients cl on c.client_id = cl.id
 left join public.classes cls on c.id = cls.cycle_id
 group by c.id, cl.id;
+
+-- ==============================================================================
+-- MIGRACIÓN / ACTUALIZACIÓN: Recordatorios de cobro
+-- ==============================================================================
+-- Ejecutar si la tabla cycles ya existía previamente:
+alter table public.cycles add column if not exists last_reminder_at timestamptz;
+
 

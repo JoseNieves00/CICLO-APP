@@ -10,7 +10,18 @@ import { Client, Cycle } from '@/types/database';
 import { formatFriendlyDate } from '@/lib/cycleGenerator';
 import { formatCurrency } from '@/lib/whatsappTemplates';
 import {
-  CalendarCheck2,
+  evaluateCycleReminder,
+  getPrudentHoursStatus,
+  isCycleInFinalWeek,
+  CycleReminderEvaluation,
+} from '@/lib/paymentReminderEngine';
+import {
+  isNotificationSupported,
+  getNotificationPermission,
+  requestNotificationPermission,
+  checkAndSendLocalReminderNotification,
+} from '@/lib/notificationService';
+import {
   Users,
   Clock,
   Sparkles,
@@ -24,6 +35,11 @@ import {
   CheckCircle2,
   DollarSign,
   MessageCircle,
+  Bell,
+  BellRing,
+  Info,
+  ChevronDown,
+  ChevronUp,
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -32,6 +48,13 @@ export default function HomePage() {
   const [clients, setClients] = useState<Client[]>([]);
   const [cycles, setCycles] = useState<Cycle[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showEarlyPayments, setShowEarlyPayments] = useState(false);
+
+  // Browser notification permission state
+  const [notificationStatus, setNotificationStatus] = useState<NotificationPermission | 'unsupported'>('default');
+
+  // Prudent hours tracking
+  const [prudentStatus, setPrudentStatus] = useState(getPrudentHoursStatus());
 
   // States for payment reminder modal
   const [reminderModalData, setReminderModalData] = useState<{
@@ -48,6 +71,17 @@ export default function HomePage() {
       ]);
       setClients(fetchedClients);
       setCycles(fetchedCycles);
+
+      // Check browser notification support & permission
+      if (isNotificationSupported()) {
+        const perm = getNotificationPermission();
+        setNotificationStatus(perm);
+        if (perm === 'granted') {
+          checkAndSendLocalReminderNotification(fetchedCycles, fetchedClients);
+        }
+      } else {
+        setNotificationStatus('unsupported');
+      }
     } catch (err) {
       console.error('Error loading dashboard:', err);
     } finally {
@@ -57,7 +91,22 @@ export default function HomePage() {
 
   useEffect(() => {
     loadDashboardData();
+
+    // Check prudent hours status every minute
+    const interval = setInterval(() => {
+      setPrudentStatus(getPrudentHoursStatus());
+    }, 60000);
+
+    return () => clearInterval(interval);
   }, []);
+
+  const handleEnableNotifications = async () => {
+    const perm = await requestNotificationPermission();
+    setNotificationStatus(perm);
+    if (perm === 'granted') {
+      checkAndSendLocalReminderNotification(cycles, clients, { force: true });
+    }
+  };
 
   const handleUpdatePhone = async (newPhone: string) => {
     if (!reminderModalData) return;
@@ -66,10 +115,20 @@ export default function HomePage() {
     setReminderModalData((prev) => (prev ? { ...prev, client: updated } : null));
   };
 
+  const handleReminderSent = (updatedCycle: Cycle) => {
+    setCycles((prev) => prev.map((c) => (c.id === updatedCycle.id ? updatedCycle : c)));
+  };
+
   const activeCycles = cycles.filter(
     (c) => c.status === 'active' || c.status === 'in_reposicion'
   );
   const pendingPayments = cycles.filter((c) => !c.is_paid);
+
+  // Clasificación inteligente de cobros:
+  // 1. Cobros debidos (ya están en su última semana, reposición o vencidos)
+  const dueReminders = pendingPayments.filter((c) => isCycleInFinalWeek(c));
+  // 2. Cobros aún en semanas iniciales (semanas 1 a 3)
+  const earlyPayments = pendingPayments.filter((c) => !isCycleInFinalWeek(c));
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col">
@@ -144,44 +203,103 @@ export default function HomePage() {
 
           <div className="bg-slate-900/70 border border-slate-800/80 rounded-2xl p-3.5">
             <div className="flex items-center justify-between text-slate-400 mb-1">
-              <span className="text-[11px] font-medium">Pagos Pendientes</span>
+              <span className="text-[11px] font-medium">Cobros Semana Final</span>
               <DollarSign className="w-4 h-4 text-amber-400" />
             </div>
-            <div className="text-xl font-extrabold text-white">{pendingPayments.length}</div>
-            <p className="text-[10px] text-slate-500 mt-0.5">Clientes por pagar</p>
+            <div className="text-xl font-extrabold text-white">{dueReminders.length}</div>
+            <p className="text-[10px] text-slate-500 mt-0.5">Listos para recordar</p>
           </div>
         </div>
 
-        {/* Recordatorios de Cobro Pendiente (WhatsApp Notification Banner) */}
-        {pendingPayments.length > 0 && (
+        {/* Prudent Contact Hours & Notifications Status Bar */}
+        <div className="p-3 rounded-2xl bg-slate-900/90 border border-slate-800/80 flex items-center justify-between gap-3 text-xs">
+          <div className="flex items-center gap-2 min-w-0">
+            <span
+              className={`w-2 h-2 rounded-full flex-shrink-0 ${
+                prudentStatus.isPrudent ? 'bg-emerald-400 animate-pulse' : 'bg-amber-400'
+              }`}
+            />
+            <div className="truncate">
+              <span className="font-semibold text-slate-200">
+                {prudentStatus.isPrudent ? 'Horario moderado (9 AM - 7 PM)' : 'Fuera de horario sugerido'}
+              </span>
+              <span className="text-[10px] text-slate-400 ml-1.5 hidden sm:inline">
+                ({prudentStatus.currentHourStr})
+              </span>
+            </div>
+          </div>
+
+          {notificationStatus === 'default' && (
+            <button
+              type="button"
+              onClick={handleEnableNotifications}
+              className="flex-shrink-0 inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-indigo-600/20 hover:bg-indigo-600/30 border border-indigo-500/30 text-indigo-300 text-[11px] font-medium transition-colors"
+            >
+              <Bell className="w-3 h-3" />
+              <span>Activar alertas</span>
+            </button>
+          )}
+
+          {notificationStatus === 'granted' && (
+            <span className="flex-shrink-0 inline-flex items-center gap-1 text-[10px] text-emerald-400 font-medium">
+              <BellRing className="w-3 h-3" />
+              <span>Alertas activas</span>
+            </span>
+          )}
+        </div>
+
+        {/* Recordatorios de Cobro (SEMANA FINAL Y REPOSICIÓN) */}
+        {dueReminders.length > 0 ? (
           <div className="bg-gradient-to-br from-amber-950/40 via-slate-900/90 to-slate-900 border border-amber-500/30 rounded-3xl p-4 space-y-3 shadow-lg">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-1.5 text-xs font-bold text-amber-300">
                 <AlertTriangle className="w-4 h-4 text-amber-400" />
-                <span>Recordatorios de Cobro ({pendingPayments.length})</span>
+                <span>Cobros Semana Final ({dueReminders.length})</span>
               </div>
               <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 font-semibold">
                 WhatsApp
               </span>
             </div>
 
+            <p className="text-[11px] text-slate-400 leading-tight">
+              Alumnos en su última semana de clases o semana de reposición con pago pendiente:
+            </p>
+
             <div className="space-y-2">
-              {pendingPayments.map((cy) => {
+              {dueReminders.map((cy) => {
                 const client = clients.find((c) => c.id === cy.client_id);
                 if (!client) return null;
+
+                const evaluation: CycleReminderEvaluation = evaluateCycleReminder(cy);
 
                 return (
                   <div
                     key={cy.id}
                     className="p-3 rounded-2xl bg-slate-950/70 border border-slate-800/80 flex items-center justify-between gap-2 text-xs"
                   >
-                    <div className="min-w-0 flex-1">
-                      <div className="font-bold text-white truncate">
-                        {client.student_name}
+                    <div className="min-w-0 flex-1 space-y-0.5">
+                      <div className="flex items-center gap-2">
+                        <span className="font-bold text-white truncate">
+                          {client.student_name}
+                        </span>
+                        <span
+                          className={`text-[9px] px-1.5 py-0.5 rounded font-semibold border ${
+                            evaluation.badgeColor === 'rose'
+                              ? 'bg-rose-500/15 text-rose-300 border-rose-500/30'
+                              : evaluation.badgeColor === 'amber'
+                              ? 'bg-amber-500/15 text-amber-300 border-amber-500/30'
+                              : evaluation.badgeColor === 'indigo'
+                              ? 'bg-indigo-500/15 text-indigo-300 border-indigo-500/30'
+                              : 'bg-slate-800 text-slate-300 border-slate-700'
+                          }`}
+                        >
+                          {evaluation.badgeLabel}
+                        </span>
                       </div>
+
                       <div className="text-[11px] text-slate-400 truncate">
                         {client.guardian_name ? `${client.guardian_name} • ` : ''}
-                        {cy.price ? formatCurrency(cy.price) : `Plan ${cy.plan_classes} clases`}
+                        {evaluation.weekInfo.label} • {cy.price ? formatCurrency(cy.price) : `Plan ${cy.plan_classes} clases`}
                       </div>
                     </div>
 
@@ -197,6 +315,72 @@ export default function HomePage() {
                 );
               })}
             </div>
+          </div>
+        ) : (
+          <div className="p-3.5 rounded-2xl bg-slate-900/50 border border-slate-800 text-xs text-slate-400 flex items-center gap-2.5">
+            <CheckCircle2 className="w-4 h-4 text-emerald-400 flex-shrink-0" />
+            <span>No hay cobros pendientes para hoy. ¡Todo al día!</span>
+          </div>
+        )}
+
+        {/* Cobros en semanas iniciales (Semanas 1 a 3) - Colapsable */}
+        {earlyPayments.length > 0 && (
+          <div className="bg-slate-900/40 border border-slate-800/60 rounded-2xl overflow-hidden">
+            <button
+              type="button"
+              onClick={() => setShowEarlyPayments(!showEarlyPayments)}
+              className="w-full p-3 flex items-center justify-between text-xs text-slate-400 hover:text-slate-300 transition-colors"
+            >
+              <div className="flex items-center gap-2">
+                <Info className="w-3.5 h-3.5 text-slate-500" />
+                <span>Ciclos en semanas iniciales sin cobrar ({earlyPayments.length})</span>
+              </div>
+              <div className="flex items-center gap-1 text-[11px] text-slate-500">
+                <span>{showEarlyPayments ? 'Ocultar' : 'Ver'}</span>
+                {showEarlyPayments ? (
+                  <ChevronUp className="w-3.5 h-3.5" />
+                ) : (
+                  <ChevronDown className="w-3.5 h-3.5" />
+                )}
+              </div>
+            </button>
+
+            {showEarlyPayments && (
+              <div className="p-3 pt-0 space-y-2 border-t border-slate-800/40">
+                <p className="text-[11px] text-slate-500">
+                  Estos ciclos aún van en las semanas 1 a 3. El recordatorio se activará automáticamente al llegar a la Semana 4:
+                </p>
+                {earlyPayments.map((cy) => {
+                  const client = clients.find((c) => c.id === cy.client_id);
+                  if (!client) return null;
+                  const evalEarly = evaluateCycleReminder(cy);
+
+                  return (
+                    <div
+                      key={cy.id}
+                      className="p-2.5 rounded-xl bg-slate-950/60 border border-slate-800/60 flex items-center justify-between text-xs"
+                    >
+                      <div className="min-w-0">
+                        <div className="font-semibold text-slate-300 truncate">
+                          {client.student_name}
+                        </div>
+                        <div className="text-[10px] text-slate-500">
+                          {evalEarly.weekInfo.label} • Activa el {formatFriendlyDate(evalEarly.weekInfo.finalWeekStartDate)}
+                        </div>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => setReminderModalData({ client, cycle: cy })}
+                        className="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-[11px] font-medium"
+                      >
+                        Anticipar
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
         )}
 
@@ -286,6 +470,7 @@ export default function HomePage() {
           client={reminderModalData.client}
           cycle={reminderModalData.cycle}
           onUpdatePhone={handleUpdatePhone}
+          onReminderSent={handleReminderSent}
         />
       )}
 

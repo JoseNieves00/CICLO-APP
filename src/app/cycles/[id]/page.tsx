@@ -25,6 +25,10 @@ import {
   formatTime12h,
 } from '@/lib/cycleGenerator';
 import {
+  evaluateCycleReminder,
+  getPrudentHoursStatus,
+} from '@/lib/paymentReminderEngine';
+import {
   CalendarCheck2,
   Calendar,
   Clock,
@@ -119,6 +123,11 @@ export default function CycleDetailPage({
 
     return { completed, cancelled, pending, remaining, percent };
   }, [cycle, classes]);
+
+  const reminderEvaluation = useMemo(() => {
+    if (!cycle) return null;
+    return evaluateCycleReminder(cycle);
+  }, [cycle]);
 
   // Limits
   const limits = useMemo(() => {
@@ -324,15 +333,43 @@ export default function CycleDetailPage({
             </button>
           </div>
 
-          {!cycle.is_paid && (
-            <div className="pt-2 border-t border-slate-800/80">
+          {!cycle.is_paid && reminderEvaluation && (
+            <div className="pt-2.5 border-t border-slate-800/80 space-y-2">
+              <div className="p-2.5 rounded-xl bg-slate-950/70 border border-slate-800/80 flex items-center justify-between gap-2 text-xs">
+                <div className="space-y-0.5 min-w-0">
+                  <div className="text-[11px] font-semibold text-slate-300 truncate">
+                    {reminderEvaluation.title}
+                  </div>
+                  <div className="text-[10px] text-slate-400 leading-tight">
+                    {reminderEvaluation.description}
+                  </div>
+                </div>
+                <span
+                  className={`flex-shrink-0 text-[10px] px-2 py-0.5 rounded font-semibold border ${
+                    reminderEvaluation.badgeColor === 'rose'
+                      ? 'bg-rose-500/15 text-rose-300 border-rose-500/30'
+                      : reminderEvaluation.badgeColor === 'amber'
+                      ? 'bg-amber-500/15 text-amber-300 border-amber-500/30'
+                      : reminderEvaluation.badgeColor === 'indigo'
+                      ? 'bg-indigo-500/15 text-indigo-300 border-indigo-500/30'
+                      : 'bg-slate-800 text-slate-300 border-slate-700'
+                  }`}
+                >
+                  {reminderEvaluation.badgeLabel}
+                </span>
+              </div>
+
               <button
                 type="button"
                 onClick={() => setIsPaymentModalOpen(true)}
                 className="w-full py-2.5 px-3 rounded-xl bg-emerald-600/15 hover:bg-emerald-600/25 border border-emerald-500/30 text-emerald-300 text-xs font-semibold flex items-center justify-center gap-2 transition-all shadow-sm"
               >
                 <MessageCircle className="w-4 h-4 text-emerald-400" />
-                <span>Enviar Recordatorio de Cobro a WhatsApp</span>
+                <span>
+                  {reminderEvaluation.weekInfo.isFinalWeek
+                    ? 'Enviar Recordatorio de Cobro a WhatsApp'
+                    : 'Anticipar Recordatorio de Cobro a WhatsApp'}
+                </span>
               </button>
             </div>
           )}
@@ -546,6 +583,7 @@ export default function CycleDetailPage({
         client={client}
         cycle={cycle}
         onUpdatePhone={handleUpdatePhone}
+        onReminderSent={(updated) => setCycle(updated)}
       />
 
       {/* Modal for generating and sharing images */}

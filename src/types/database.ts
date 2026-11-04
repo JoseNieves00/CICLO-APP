@@ -43,6 +43,7 @@ export interface Cycle {
   status: CycleStatus;
   is_paid: boolean;
   paid_at: string | null;
+  last_reminder_at: string | null;
   price: number | null;
   notes: string | null;
   created_at: string;
@@ -136,6 +137,7 @@ export interface Database {
           status?: CycleStatus;
           is_paid?: boolean;
           paid_at?: string | null;
+          last_reminder_at?: string | null;
           price?: number | null;
           notes?: string | null;
           created_at?: string;
@@ -153,6 +155,7 @@ export interface Database {
           status?: CycleStatus;
           is_paid?: boolean;
           paid_at?: string | null;
+          last_reminder_at?: string | null;
           price?: number | null;
           notes?: string | null;
           created_at?: string;
