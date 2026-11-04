@@ -76,7 +76,7 @@ export default function ClientDetailPage({
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col">
       <header className="sticky top-0 z-30 bg-slate-950/80 backdrop-blur-lg border-b border-slate-800/80 px-4 py-3">
-        <div className="max-w-md mx-auto flex items-center justify-between">
+        <div className="max-w-md md:max-w-4xl mx-auto flex items-center justify-between">
           <Link
             href="/clients"
             className="flex items-center gap-1 text-slate-400 hover:text-white text-xs"
@@ -89,7 +89,7 @@ export default function ClientDetailPage({
         </div>
       </header>
 
-      <main className="flex-1 max-w-md mx-auto w-full px-4 py-4 space-y-4 pb-24">
+      <main className="flex-1 max-w-md md:max-w-4xl mx-auto w-full px-4 py-4 md:py-6 space-y-4 md:space-y-6 pb-24 md:pb-28">
         {/* Profile Card */}
         <div className="bg-slate-900/80 border border-slate-800 rounded-3xl p-5 space-y-4 shadow-xl">
           <div className="flex items-start justify-between">
@@ -162,7 +162,7 @@ export default function ClientDetailPage({
               No tiene ciclos registrados aún.
             </div>
           ) : (
-            <div className="space-y-2">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               {cycles.map((cy) => (
                 <Link
                   key={cy.id}

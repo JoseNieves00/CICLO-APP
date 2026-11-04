@@ -205,7 +205,7 @@ export default function CycleDetailPage({
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col">
       {/* Top Navbar */}
       <header className="sticky top-0 z-30 bg-slate-950/80 backdrop-blur-lg border-b border-slate-800/80 px-4 py-3">
-        <div className="max-w-md mx-auto flex items-center justify-between">
+        <div className="max-w-md md:max-w-4xl mx-auto flex items-center justify-between">
           <Link
             href="/clients"
             className="flex items-center gap-1 text-slate-400 hover:text-white text-xs"
@@ -220,9 +220,11 @@ export default function CycleDetailPage({
         </div>
       </header>
 
-      <main className="flex-1 max-w-md mx-auto w-full px-4 py-4 space-y-4 pb-28">
+      <main className="flex-1 max-w-md md:max-w-4xl mx-auto w-full px-4 py-4 md:py-6 space-y-4 md:space-y-6 pb-28">
+        {/* Top 2 Cards: Overview & Payment (2-column on tablet) */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
         {/* Client & Cycle Header Card */}
-        <div className="bg-gradient-to-br from-indigo-950/60 to-slate-900 border border-indigo-500/30 rounded-3xl p-5 shadow-xl space-y-4">
+        <div className="bg-gradient-to-br from-indigo-950/60 to-slate-900 border border-indigo-500/30 rounded-3xl p-5 shadow-xl space-y-4 h-full">
           <div className="flex items-start justify-between gap-3">
             <div>
               <span className="text-[10px] font-semibold tracking-wider uppercase text-indigo-400">
@@ -374,6 +376,7 @@ export default function CycleDetailPage({
             </div>
           )}
         </div>
+        </div>
 
         {/* Classes List */}
         <div className="space-y-2.5">
@@ -385,7 +388,7 @@ export default function CycleDetailPage({
             <span className="text-[11px] text-slate-400">Toca una clase para gestionarla</span>
           </div>
 
-          <div className="space-y-2">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
             {classes.map((cls) => {
               const isCompleted = cls.status === 'completed';
               const isCancelled = cls.status === 'cancelled';

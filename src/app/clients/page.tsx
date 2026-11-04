@@ -73,7 +73,7 @@ export default function ClientsPage() {
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col">
       <Header title="Clientes" subtitle="Alumnos y ciclos de clases" />
 
-      <main className="flex-1 max-w-md mx-auto w-full px-4 py-4 space-y-4 pb-24">
+      <main className="flex-1 max-w-md md:max-w-4xl mx-auto w-full px-4 py-4 md:py-6 space-y-4 md:space-y-6 pb-24 md:pb-28">
         {/* Top Controls: Search + Add */}
         <div className="flex items-center gap-2">
           <div className="relative flex-1">
@@ -134,20 +134,21 @@ export default function ClientsPage() {
               <span>Ciclo Actual</span>
             </div>
 
-            {filteredClients.map((client) => {
-              // Buscar ciclo activo para este cliente
-              const activeCycle = cycles.find(
-                (c) => c.client_id === client.id && (c.status === 'active' || c.status === 'in_reposicion')
-              );
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+              {filteredClients.map((client) => {
+                // Buscar ciclo activo para este cliente
+                const activeCycle = cycles.find(
+                  (c) => c.client_id === client.id && (c.status === 'active' || c.status === 'in_reposicion')
+                );
 
-              // Formatear WhatsApp URL si tiene teléfono
-              const cleanPhone = client.phone ? client.phone.replace(/[^0-9]/g, '') : null;
+                // Formatear WhatsApp URL si tiene teléfono
+                const cleanPhone = client.phone ? client.phone.replace(/[^0-9]/g, '') : null;
 
-              return (
-                <div
-                  key={client.id}
-                  className="bg-slate-900/70 border border-slate-800/80 hover:border-slate-700/80 rounded-2xl p-4 transition-all space-y-3"
-                >
+                return (
+                  <div
+                    key={client.id}
+                    className="bg-slate-900/70 border border-slate-800/80 hover:border-slate-700/80 rounded-2xl p-4 transition-all space-y-3"
+                  >
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex-1 min-w-0">
                       <h4 className="text-sm font-bold text-white truncate">
@@ -229,6 +230,7 @@ export default function ClientsPage() {
                 </div>
               );
             })}
+            </div>
           </div>
         )}
       </main>

@@ -14,7 +14,7 @@ export default function Header({ title = 'Ciclo App', subtitle }: HeaderProps) {
 
   return (
     <header className="sticky top-0 z-30 bg-slate-950/80 backdrop-blur-lg border-b border-slate-800/80 px-4 py-3">
-      <div className="max-w-md mx-auto flex items-center justify-between">
+      <div className="max-w-md md:max-w-4xl mx-auto flex items-center justify-between">
         <div className="flex items-center gap-2.5">
           <div className="w-8 h-8 rounded-xl bg-indigo-600/15 border border-indigo-500/30 flex items-center justify-center text-indigo-400">
             <CalendarCheck2 className="w-4 h-4" />

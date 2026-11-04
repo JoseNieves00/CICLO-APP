@@ -137,7 +137,7 @@ export default function HomePage() {
         subtitle={user?.email || 'Control de Clases'}
       />
 
-      <main className="flex-1 max-w-md mx-auto w-full px-4 py-4 space-y-4 pb-24">
+      <main className="flex-1 max-w-md md:max-w-4xl mx-auto w-full px-4 py-4 md:py-6 space-y-4 md:space-y-6 pb-24 md:pb-28">
         {/* Banner if local/demo mode */}
         {!isConfigured && (
           <div className="p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-200 text-xs flex items-start justify-between gap-3">
@@ -160,17 +160,17 @@ export default function HomePage() {
         )}
 
         {/* Quick Action Shortcuts */}
-        <div className="grid grid-cols-2 gap-2.5">
+        <div className="grid grid-cols-2 gap-2.5 md:gap-4">
           <Link
             href="/clients"
-            className="p-3.5 rounded-2xl bg-indigo-600/15 border border-indigo-500/30 hover:bg-indigo-600/25 transition-all flex items-center gap-3 text-left group"
+            className="p-3.5 md:p-4 rounded-2xl bg-indigo-600/15 border border-indigo-500/30 hover:bg-indigo-600/25 transition-all flex items-center gap-3 text-left group"
           >
-            <div className="w-10 h-10 rounded-xl bg-indigo-600/20 text-indigo-400 flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform">
+            <div className="w-10 h-10 md:w-11 md:h-11 rounded-xl bg-indigo-600/20 text-indigo-400 flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform">
               <UserPlus className="w-5 h-5" />
             </div>
             <div>
-              <div className="text-xs font-bold text-white">Clientes</div>
-              <div className="text-[10px] text-indigo-300">
+              <div className="text-xs md:text-sm font-bold text-white">Clientes y Alumnos</div>
+              <div className="text-[10px] md:text-xs text-indigo-300">
                 {clients.length} registrado{clients.length !== 1 ? 's' : ''}
               </div>
             </div>
@@ -178,36 +178,56 @@ export default function HomePage() {
 
           <Link
             href="/cycles/new"
-            className="p-3.5 rounded-2xl bg-emerald-600/15 border border-emerald-500/30 hover:bg-emerald-600/25 transition-all flex items-center gap-3 text-left group"
+            className="p-3.5 md:p-4 rounded-2xl bg-emerald-600/15 border border-emerald-500/30 hover:bg-emerald-600/25 transition-all flex items-center gap-3 text-left group"
           >
-            <div className="w-10 h-10 rounded-xl bg-emerald-600/20 text-emerald-400 flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform">
+            <div className="w-10 h-10 md:w-11 md:h-11 rounded-xl bg-emerald-600/20 text-emerald-400 flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform">
               <PlusCircle className="w-5 h-5" />
             </div>
             <div>
-              <div className="text-xs font-bold text-white">Nuevo Ciclo</div>
-              <div className="text-[10px] text-emerald-300">Generar fechas</div>
+              <div className="text-xs md:text-sm font-bold text-white">Nuevo Ciclo</div>
+              <div className="text-[10px] md:text-xs text-emerald-300">Generador de clases</div>
             </div>
           </Link>
         </div>
 
-        {/* Metric Cards */}
-        <div className="grid grid-cols-2 gap-2.5">
-          <div className="bg-slate-900/70 border border-slate-800/80 rounded-2xl p-3.5">
+        {/* Metric Cards - 4 columns on tablet */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5 md:gap-4">
+          <div className="bg-slate-900/70 border border-slate-800/80 rounded-2xl p-3.5 md:p-4">
             <div className="flex items-center justify-between text-slate-400 mb-1">
               <span className="text-[11px] font-medium">Ciclos Activos</span>
               <Calendar className="w-4 h-4 text-emerald-400" />
             </div>
-            <div className="text-xl font-extrabold text-white">{activeCycles.length}</div>
-            <p className="text-[10px] text-slate-500 mt-0.5">En progreso</p>
+            <div className="text-xl md:text-2xl font-extrabold text-white">{activeCycles.length}</div>
+            <p className="text-[10px] text-slate-500 mt-0.5">En curso regular</p>
           </div>
 
-          <div className="bg-slate-900/70 border border-slate-800/80 rounded-2xl p-3.5">
+          <div className="bg-slate-900/70 border border-slate-800/80 rounded-2xl p-3.5 md:p-4">
             <div className="flex items-center justify-between text-slate-400 mb-1">
-              <span className="text-[11px] font-medium">Cobros Semana Final</span>
+              <span className="text-[11px] font-medium">Cobros Semana 4</span>
               <DollarSign className="w-4 h-4 text-amber-400" />
             </div>
-            <div className="text-xl font-extrabold text-white">{dueReminders.length}</div>
-            <p className="text-[10px] text-slate-500 mt-0.5">Listos para recordar</p>
+            <div className="text-xl md:text-2xl font-extrabold text-white">{dueReminders.length}</div>
+            <p className="text-[10px] text-slate-500 mt-0.5">Listos para cobrar</p>
+          </div>
+
+          <div className="bg-slate-900/70 border border-slate-800/80 rounded-2xl p-3.5 md:p-4">
+            <div className="flex items-center justify-between text-slate-400 mb-1">
+              <span className="text-[11px] font-medium">Alumnos Totales</span>
+              <Users className="w-4 h-4 text-indigo-400" />
+            </div>
+            <div className="text-xl md:text-2xl font-extrabold text-white">{clients.length}</div>
+            <p className="text-[10px] text-slate-500 mt-0.5">En base de datos</p>
+          </div>
+
+          <div className="bg-slate-900/70 border border-slate-800/80 rounded-2xl p-3.5 md:p-4">
+            <div className="flex items-center justify-between text-slate-400 mb-1">
+              <span className="text-[11px] font-medium">Pagados este mes</span>
+              <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+            </div>
+            <div className="text-xl md:text-2xl font-extrabold text-white">
+              {cycles.filter((c) => c.is_paid).length}
+            </div>
+            <p className="text-[10px] text-slate-500 mt-0.5">Ciclos al día</p>
           </div>
         </div>
 
@@ -265,7 +285,7 @@ export default function HomePage() {
               Alumnos en su última semana de clases o semana de reposición con pago pendiente:
             </p>
 
-            <div className="space-y-2">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
               {dueReminders.map((cy) => {
                 const client = clients.find((c) => c.id === cy.client_id);
                 if (!client) return null;
@@ -275,7 +295,7 @@ export default function HomePage() {
                 return (
                   <div
                     key={cy.id}
-                    className="p-3 rounded-2xl bg-slate-950/70 border border-slate-800/80 flex items-center justify-between gap-2 text-xs"
+                    className="p-3.5 rounded-2xl bg-slate-950/70 border border-slate-800/80 flex items-center justify-between gap-2.5 text-xs"
                   >
                     <div className="min-w-0 flex-1 space-y-0.5">
                       <div className="flex items-center gap-2">
@@ -350,35 +370,37 @@ export default function HomePage() {
                 <p className="text-[11px] text-slate-500">
                   Estos ciclos aún van en las semanas 1 a 3. El recordatorio se activará automáticamente al llegar a la Semana 4:
                 </p>
-                {earlyPayments.map((cy) => {
-                  const client = clients.find((c) => c.id === cy.client_id);
-                  if (!client) return null;
-                  const evalEarly = evaluateCycleReminder(cy);
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                  {earlyPayments.map((cy) => {
+                    const client = clients.find((c) => c.id === cy.client_id);
+                    if (!client) return null;
+                    const evalEarly = evaluateCycleReminder(cy);
 
-                  return (
-                    <div
-                      key={cy.id}
-                      className="p-2.5 rounded-xl bg-slate-950/60 border border-slate-800/60 flex items-center justify-between text-xs"
-                    >
-                      <div className="min-w-0">
-                        <div className="font-semibold text-slate-300 truncate">
-                          {client.student_name}
-                        </div>
-                        <div className="text-[10px] text-slate-500">
-                          {evalEarly.weekInfo.label} • Activa el {formatFriendlyDate(evalEarly.weekInfo.finalWeekStartDate)}
-                        </div>
-                      </div>
-
-                      <button
-                        type="button"
-                        onClick={() => setReminderModalData({ client, cycle: cy })}
-                        className="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-[11px] font-medium"
+                    return (
+                      <div
+                        key={cy.id}
+                        className="p-2.5 rounded-xl bg-slate-950/60 border border-slate-800/60 flex items-center justify-between text-xs"
                       >
-                        Anticipar
-                      </button>
-                    </div>
-                  );
-                })}
+                        <div className="min-w-0">
+                          <div className="font-semibold text-slate-300 truncate">
+                            {client.student_name}
+                          </div>
+                          <div className="text-[10px] text-slate-500">
+                            {evalEarly.weekInfo.label} • Activa el {formatFriendlyDate(evalEarly.weekInfo.finalWeekStartDate)}
+                          </div>
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={() => setReminderModalData({ client, cycle: cy })}
+                          className="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-[11px] font-medium"
+                        >
+                          Anticipar
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
             )}
           </div>
@@ -414,14 +436,14 @@ export default function HomePage() {
               </Link>
             </div>
           ) : (
-            <div className="space-y-2.5">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
               {activeCycles.map((cy) => {
                 const client = clients.find((c) => c.id === cy.client_id);
                 return (
                   <Link
                     key={cy.id}
                     href={`/cycles/${cy.id}`}
-                    className="block p-4 rounded-2xl bg-slate-900/80 border border-slate-800 hover:border-slate-700 transition-all space-y-2.5 group"
+                    className="block p-4 rounded-2xl bg-slate-900/80 border border-slate-800 hover:border-slate-700 transition-all space-y-2.5 group hover:shadow-lg hover:shadow-indigo-950/20"
                   >
                     <div className="flex items-start justify-between">
                       <div>

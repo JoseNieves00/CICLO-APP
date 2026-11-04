@@ -212,7 +212,7 @@ function NewCycleForm() {
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col">
       <Header title="Nuevo Ciclo" subtitle="Generador automático de clases" />
 
-      <main className="flex-1 max-w-md mx-auto w-full px-4 py-4 space-y-4 pb-24">
+      <main className="flex-1 max-w-md md:max-w-4xl mx-auto w-full px-4 py-4 md:py-6 space-y-4 md:space-y-6 pb-24 md:pb-28">
         {errorMsg && (
           <div className="p-3.5 rounded-2xl bg-rose-500/10 border border-rose-500/20 text-rose-300 text-xs flex items-center gap-2">
             <AlertCircle className="w-4 h-4 flex-shrink-0" />
@@ -220,7 +220,10 @@ function NewCycleForm() {
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit}>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5 items-start">
+            {/* Left Column: Configuration Controls */}
+            <div className="space-y-4">
           {/* 1. Cliente */}
           <div className="bg-slate-900/80 border border-slate-800 rounded-3xl p-4 space-y-3">
             <label className="block text-xs font-semibold text-slate-200">
@@ -402,9 +405,12 @@ function NewCycleForm() {
               </div>
             </div>
           </div>
+          </div>
 
-          {/* 5. VISTA PREVIA AUTOMÁTICA DE LAS 5 SEMANAS */}
-          <div className="bg-gradient-to-b from-slate-900/90 to-slate-900/60 border border-indigo-500/30 rounded-3xl p-4 space-y-3 shadow-lg">
+          {/* Right Column: Live Schedule Preview & Action (Sticky on tablet) */}
+          <div className="md:sticky md:top-20 space-y-4">
+            {/* 5. VISTA PREVIA AUTOMÁTICA DE LAS 5 SEMANAS */}
+            <div className="bg-gradient-to-b from-slate-900/90 to-slate-900/60 border border-indigo-500/30 rounded-3xl p-4 space-y-3 shadow-lg">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-1.5 text-xs font-bold text-white">
                 <Sparkles className="w-4 h-4 text-indigo-400" />
@@ -481,22 +487,24 @@ function NewCycleForm() {
             </div>
           </div>
 
-          {/* Submit */}
-          <button
-            type="submit"
-            disabled={saving || clients.length === 0}
-            className="w-full py-3.5 px-4 rounded-2xl bg-gradient-to-r from-indigo-600 to-indigo-500 hover:from-indigo-500 hover:to-indigo-400 text-white font-semibold text-sm shadow-xl shadow-indigo-600/30 flex items-center justify-center gap-2 transition-all disabled:opacity-50"
-          >
-            {saving ? (
-              <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-            ) : (
-              <>
-                <CalendarPlus className="w-4 h-4" />
-                <span>Guardar y Abrir Ciclo</span>
-              </>
-            )}
-          </button>
-        </form>
+            {/* Submit */}
+            <button
+              type="submit"
+              disabled={saving || clients.length === 0}
+              className="w-full py-3.5 px-4 rounded-2xl bg-gradient-to-r from-indigo-600 to-indigo-500 hover:from-indigo-500 hover:to-indigo-400 text-white font-semibold text-sm shadow-xl shadow-indigo-600/30 flex items-center justify-center gap-2 transition-all disabled:opacity-50"
+            >
+              {saving ? (
+                <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+              ) : (
+                <>
+                  <CalendarPlus className="w-4 h-4" />
+                  <span>Guardar y Abrir Ciclo</span>
+                </>
+              )}
+            </button>
+          </div>
+        </div>
+      </form>
       </main>
 
       <BottomNav />

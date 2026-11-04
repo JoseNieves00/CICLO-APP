@@ -80,9 +80,12 @@ export default function SettingsPage() {
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col">
       <Header title="Ajustes" subtitle="Preferencias y respaldo" />
 
-      <main className="flex-1 max-w-md mx-auto w-full px-4 py-5 space-y-4 pb-24">
-        {/* User Profile Card */}
-        <div className="bg-slate-900/80 border border-slate-800 rounded-3xl p-5 space-y-4">
+      <main className="flex-1 max-w-md md:max-w-4xl mx-auto w-full px-4 py-5 md:py-6 space-y-4 md:space-y-6 pb-24 md:pb-28">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-5 items-start">
+          {/* Left Column: User & Notifications */}
+          <div className="space-y-4">
+            {/* User Profile Card */}
+            <div className="bg-slate-900/80 border border-slate-800 rounded-3xl p-5 space-y-4">
           <div className="flex items-center gap-3">
             <div className="w-12 h-12 rounded-2xl bg-indigo-600/20 border border-indigo-500/30 flex items-center justify-center text-indigo-400 flex-shrink-0">
               <User className="w-6 h-6" />
@@ -186,7 +189,10 @@ export default function SettingsPage() {
             )}
           </div>
         </div>
+        </div>
 
+        {/* Right Column: Respaldo, PWA & Versión */}
+        <div className="space-y-4">
         {/* Respaldo de Datos (Exportar a Excel / CSV) */}
         <div className="bg-slate-900/80 border border-slate-800 rounded-3xl p-5 space-y-3">
           <div className="flex items-center justify-between">
@@ -255,6 +261,8 @@ export default function SettingsPage() {
           <p className="text-[10px] text-slate-600">
             Sistema listo para producción
           </p>
+        </div>
+        </div>
         </div>
       </main>
 
