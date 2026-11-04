@@ -12,6 +12,9 @@ import {
   DAY_NAMES,
   DAY_SHORT_NAMES,
   formatFriendlyDate,
+  formatFullDate,
+  getIsoDayOfWeek,
+  addDays,
 } from '@/lib/cycleGenerator';
 import {
   CalendarPlus,
@@ -24,6 +27,7 @@ import {
   User,
   DollarSign,
   Info,
+  CalendarCheck,
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -39,7 +43,8 @@ function NewCycleForm() {
   const [selectedClientId, setSelectedClientId] = useState(initialClientId);
   const [planClasses, setPlanClasses] = useState<4 | 8>(4);
   const [frequency, setFrequency] = useState<1 | 2>(1);
-  const [selectedDays, setSelectedDays] = useState<number[]>([1]); // Default Lunes
+
+  // Start Date (Fecha de la Clase 1)
   const [startDate, setStartDate] = useState(() => {
     const today = new Date();
     const y = today.getFullYear();
@@ -47,6 +52,16 @@ function NewCycleForm() {
     const d = String(today.getDate()).padStart(2, '0');
     return `${y}-${m}-${d}`;
   });
+
+  // Days selected
+  const [selectedDays, setSelectedDays] = useState<number[]>(() => {
+    const today = new Date();
+    const y = today.getFullYear();
+    const m = String(today.getMonth() + 1).padStart(2, '0');
+    const d = String(today.getDate()).padStart(2, '0');
+    return [getIsoDayOfWeek(`${y}-${m}-${d}`)];
+  });
+
   const [scheduleTime, setScheduleTime] = useState('16:00');
   const [price, setPrice] = useState('');
   const [notes, setNotes] = useState('');
@@ -72,55 +87,73 @@ function NewCycleForm() {
     load();
   }, []);
 
+  // Cuando cambia la fecha de inicio, la Clase 1 SIEMPRE toma ese día de la semana
+  const handleStartDateChange = (newDateStr: string) => {
+    setStartDate(newDateStr);
+    const startDay = getIsoDayOfWeek(newDateStr);
+
+    if (planClasses === 4) {
+      setSelectedDays([startDay]);
+    } else {
+      setSelectedDays((prev) => {
+        const otherDay = prev.find((d) => d !== startDay);
+        const secondDay =
+          otherDay || (startDay <= 5 ? startDay + 2 : (startDay + 2) % 7 || 1);
+        return [startDay, secondDay].sort((a, b) => a - b);
+      });
+    }
+  };
+
   // Update frequency when plan changes
   const handlePlanChange = (plan: 4 | 8) => {
     setPlanClasses(plan);
+    const startDay = getIsoDayOfWeek(startDate);
+
     if (plan === 4) {
       setFrequency(1);
-      // Keep only 1 day selected
-      setSelectedDays((prev) => (prev.length > 0 ? [prev[0]] : [1]));
+      setSelectedDays([startDay]);
     } else {
       setFrequency(2);
-      // Ensure 2 days selected
       setSelectedDays((prev) => {
-        if (prev.length === 2) return prev;
-        if (prev.length === 1) {
-          // add another day, e.g. Wednesday or Thursday
-          const nextDay = prev[0] <= 3 ? prev[0] + 2 : (prev[0] + 2) % 7 || 1;
-          return [prev[0], nextDay].sort((a, b) => a - b);
-        }
-        return [2, 4]; // Martes y Jueves
+        const otherDay = prev.find((d) => d !== startDay);
+        const secondDay =
+          otherDay || (startDay <= 5 ? startDay + 2 : (startDay + 2) % 7 || 1);
+        return [startDay, secondDay].sort((a, b) => a - b);
       });
     }
   };
 
   const toggleDay = (day: number) => {
     if (planClasses === 4) {
-      // 1 day only
+      // 1 día: ajustar startDate al día seleccionado para que coincida exactamente
       setSelectedDays([day]);
+      const currentDay = getIsoDayOfWeek(startDate);
+      if (currentDay !== day) {
+        const diff = (day - currentDay + 7) % 7;
+        const adjustedDate = addDays(startDate, diff === 0 ? 0 : diff);
+        setStartDate(adjustedDate);
+      }
     } else {
-      // 2 days
+      // 2 días: mantener el día de startDate y cambiar el segundo día
+      const startDay = getIsoDayOfWeek(startDate);
+      if (day === startDay) return; // El día de la fecha de inicio no se puede desmarcar
+
       if (selectedDays.includes(day)) {
         if (selectedDays.length > 1) {
-          setSelectedDays(selectedDays.filter((d) => d !== day));
+          setSelectedDays([startDay]);
         }
       } else {
-        if (selectedDays.length >= 2) {
-          // Replace second day
-          setSelectedDays([selectedDays[0], day].sort((a, b) => a - b));
-        } else {
-          setSelectedDays([...selectedDays, day].sort((a, b) => a - b));
-        }
+        setSelectedDays([startDay, day].sort((a, b) => a - b));
       }
     }
   };
 
-  // Preview generated schedule
+  // Preview generated schedule (Garantiza que la Clase 1 es startDate)
   const previewSchedule = useMemo(() => {
     return generateCycleSchedule(startDate, planClasses, frequency, selectedDays);
   }, [startDate, planClasses, frequency, selectedDays]);
 
-  // Limits
+  // Limits (Semana 1 a 4 clases, Semana 5 reposición)
   const cycleLimits = useMemo(() => {
     return getCycleLimits(startDate);
   }, [startDate]);
@@ -172,6 +205,7 @@ function NewCycleForm() {
   };
 
   const daysList = [1, 2, 3, 4, 5, 6, 7];
+  const startDayOfWeek = getIsoDayOfWeek(startDate);
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col">
@@ -220,95 +254,24 @@ function NewCycleForm() {
             )}
           </div>
 
-          {/* 2. Plan y Frecuencia */}
-          <div className="bg-slate-900/80 border border-slate-800 rounded-3xl p-4 space-y-3">
-            <label className="block text-xs font-semibold text-slate-200">
-              2. Plan Contratado
-            </label>
-
-            <div className="grid grid-cols-2 gap-2.5">
-              <button
-                type="button"
-                onClick={() => handlePlanChange(4)}
-                className={`p-3.5 rounded-2xl border text-left transition-all ${
-                  planClasses === 4
-                    ? 'bg-indigo-600/15 border-indigo-500 text-white shadow-md shadow-indigo-600/20'
-                    : 'bg-slate-950/60 border-slate-800 text-slate-400 hover:text-slate-200'
-                }`}
-              >
-                <div className="text-base font-bold text-white">4 Clases</div>
-                <div className="text-[11px] text-indigo-300 mt-0.5">1 clase / semana</div>
-                <div className="text-[10px] text-slate-400 mt-1">4 semanas (1 mes)</div>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => handlePlanChange(8)}
-                className={`p-3.5 rounded-2xl border text-left transition-all ${
-                  planClasses === 8
-                    ? 'bg-indigo-600/15 border-indigo-500 text-white shadow-md shadow-indigo-600/20'
-                    : 'bg-slate-950/60 border-slate-800 text-slate-400 hover:text-slate-200'
-                }`}
-              >
-                <div className="text-base font-bold text-white">8 Clases</div>
-                <div className="text-[11px] text-indigo-300 mt-0.5">2 clases / semana</div>
-                <div className="text-[10px] text-slate-400 mt-1">4 semanas (1 mes)</div>
-              </button>
-            </div>
-          </div>
-
-          {/* 3. Días de la semana */}
+          {/* 2. Fecha de Inicio (Clase 1) */}
           <div className="bg-slate-900/80 border border-slate-800 rounded-3xl p-4 space-y-3">
             <div className="flex items-center justify-between">
-              <label className="text-xs font-semibold text-slate-200">
-                3. Días de la Semana
+              <label className="block text-xs font-semibold text-slate-200">
+                2. Fecha de Inicio (Día de la Clase 1)
               </label>
-              <span className="text-[11px] text-indigo-400">
-                {planClasses === 4 ? 'Elige 1 día' : 'Elige 2 días'}
+              <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-bold">
+                Clase #1
               </span>
             </div>
 
-            <div className="grid grid-cols-7 gap-1">
-              {daysList.map((day) => {
-                const isSelected = selectedDays.includes(day);
-                return (
-                  <button
-                    key={day}
-                    type="button"
-                    onClick={() => toggleDay(day)}
-                    className={`py-3 rounded-xl text-xs font-bold transition-all ${
-                      isSelected
-                        ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30'
-                        : 'bg-slate-950/60 text-slate-400 border border-slate-800/80 hover:text-white'
-                    }`}
-                  >
-                    {DAY_SHORT_NAMES[day]}
-                  </button>
-                );
-              })}
-            </div>
-
-            <div className="text-[11px] text-slate-400">
-              Día{selectedDays.length > 1 ? 's' : ''} seleccionado{selectedDays.length > 1 ? 's' : ''}:{' '}
-              <strong className="text-slate-200">
-                {selectedDays.map((d) => DAY_NAMES[d]).join(' y ') || 'Ninguno'}
-              </strong>
-            </div>
-          </div>
-
-          {/* 4. Fechas y Horario */}
-          <div className="bg-slate-900/80 border border-slate-800 rounded-3xl p-4 space-y-3">
-            <label className="block text-xs font-semibold text-slate-200">
-              4. Fecha de Inicio y Horario
-            </label>
-
             <div className="grid grid-cols-2 gap-2.5">
               <div>
-                <label className="block text-[10px] text-slate-400 mb-1">Fecha de Inicio</label>
+                <label className="block text-[10px] text-slate-400 mb-1">Fecha de la Clase 1</label>
                 <input
                   type="date"
                   value={startDate}
-                  onChange={(e) => setStartDate(e.target.value)}
+                  onChange={(e) => handleStartDateChange(e.target.value)}
                   required
                   className="w-full p-2.5 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:outline-none focus:border-indigo-500"
                 />
@@ -323,6 +286,96 @@ function NewCycleForm() {
                   className="w-full p-2.5 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:outline-none focus:border-indigo-500"
                 />
               </div>
+            </div>
+
+            <div className="p-2.5 rounded-xl bg-slate-950/70 border border-slate-800/80 text-[11px] text-slate-300 flex items-center gap-2">
+              <CalendarCheck className="w-4 h-4 text-emerald-400 flex-shrink-0" />
+              <span>
+                La <strong>Clase 1</strong> inicia exactamente el{' '}
+                <strong className="text-white">{formatFriendlyDate(startDate)}</strong> (
+                {DAY_NAMES[startDayOfWeek]}).
+              </span>
+            </div>
+          </div>
+
+          {/* 3. Plan Contratado */}
+          <div className="bg-slate-900/80 border border-slate-800 rounded-3xl p-4 space-y-3">
+            <label className="block text-xs font-semibold text-slate-200">
+              3. Plan Contratado
+            </label>
+
+            <div className="grid grid-cols-2 gap-2.5">
+              <button
+                type="button"
+                onClick={() => handlePlanChange(4)}
+                className={`p-3.5 rounded-2xl border text-left transition-all ${
+                  planClasses === 4
+                    ? 'bg-indigo-600/15 border-indigo-500 text-white shadow-md shadow-indigo-600/20'
+                    : 'bg-slate-950/60 border-slate-800 text-slate-400 hover:text-slate-200'
+                }`}
+              >
+                <div className="text-base font-bold text-white">4 Clases</div>
+                <div className="text-[11px] text-indigo-300 mt-0.5">1 clase / semana</div>
+                <div className="text-[10px] text-slate-400 mt-1">4 semanas + 1 reposición</div>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => handlePlanChange(8)}
+                className={`p-3.5 rounded-2xl border text-left transition-all ${
+                  planClasses === 8
+                    ? 'bg-indigo-600/15 border-indigo-500 text-white shadow-md shadow-indigo-600/20'
+                    : 'bg-slate-950/60 border-slate-800 text-slate-400 hover:text-slate-200'
+                }`}
+              >
+                <div className="text-base font-bold text-white">8 Clases</div>
+                <div className="text-[11px] text-indigo-300 mt-0.5">2 clases / semana</div>
+                <div className="text-[10px] text-slate-400 mt-1">4 semanas + 1 reposición</div>
+              </button>
+            </div>
+          </div>
+
+          {/* 4. Días de la semana */}
+          <div className="bg-slate-900/80 border border-slate-800 rounded-3xl p-4 space-y-3">
+            <div className="flex items-center justify-between">
+              <label className="text-xs font-semibold text-slate-200">
+                4. Días de la Semana
+              </label>
+              <span className="text-[11px] text-indigo-400">
+                {planClasses === 4 ? '1 día por semana' : '2 días por semana'}
+              </span>
+            </div>
+
+            <div className="grid grid-cols-7 gap-1">
+              {daysList.map((day) => {
+                const isSelected = selectedDays.includes(day);
+                const isStartDay = day === startDayOfWeek;
+
+                return (
+                  <button
+                    key={day}
+                    type="button"
+                    onClick={() => toggleDay(day)}
+                    className={`py-3 rounded-xl text-xs font-bold transition-all relative ${
+                      isSelected
+                        ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30'
+                        : 'bg-slate-950/60 text-slate-400 border border-slate-800/80 hover:text-white'
+                    }`}
+                  >
+                    {DAY_SHORT_NAMES[day]}
+                    {isStartDay && (
+                      <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-emerald-400" />
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+
+            <div className="text-[11px] text-slate-400">
+              Día{selectedDays.length > 1 ? 's' : ''}:{' '}
+              <strong className="text-slate-200">
+                {selectedDays.map((d) => DAY_NAMES[d]).join(' y ')}
+              </strong>
             </div>
 
             <div>
@@ -342,52 +395,80 @@ function NewCycleForm() {
             </div>
           </div>
 
-          {/* 5. VISTA PREVIA AUTOMÁTICA DE FECHAS */}
+          {/* 5. VISTA PREVIA AUTOMÁTICA DE LAS 5 SEMANAS */}
           <div className="bg-gradient-to-b from-slate-900/90 to-slate-900/60 border border-indigo-500/30 rounded-3xl p-4 space-y-3 shadow-lg">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-1.5 text-xs font-bold text-white">
                 <Sparkles className="w-4 h-4 text-indigo-400" />
-                <span>Programación Tentativa Generada</span>
+                <span>Programación del Ciclo (5 Semanas)</span>
               </div>
               <span className="text-[11px] px-2 py-0.5 rounded-full bg-indigo-600/20 text-indigo-300 font-semibold">
                 {previewSchedule.length} clases
               </span>
             </div>
 
-            <p className="text-[11px] text-slate-400">
-              Fechas tentativas para las 4 semanas del ciclo:
+            <p className="text-[11px] text-slate-400 leading-tight">
+              La Clase #1 inicia el <strong>{formatFriendlyDate(startDate)}</strong>. Las 4 semanas de clases se calculan desde esa fecha y la Semana 5 queda para reposición:
             </p>
 
+            {/* Listado de Semanas 1 a 4 */}
             <div className="space-y-2">
-              {previewSchedule.map((c) => (
-                <div
-                  key={c.classNumber}
-                  className="p-2.5 rounded-xl bg-slate-950/70 border border-slate-800/80 flex items-center justify-between text-xs"
-                >
-                  <div className="flex items-center gap-2.5">
-                    <span className="w-6 h-6 rounded-lg bg-indigo-600/20 text-indigo-300 flex items-center justify-center font-bold text-[11px]">
-                      #{c.classNumber}
-                    </span>
-                    <span className="font-semibold text-slate-200">
-                      {formatFriendlyDate(c.scheduledDate)}
-                    </span>
+              {[1, 2, 3, 4].map((wk) => {
+                const weekClasses = previewSchedule.filter((c) => c.weekNumber === wk);
+                if (weekClasses.length === 0) return null;
+
+                return (
+                  <div key={wk} className="space-y-1.5">
+                    <div className="text-[10px] font-bold uppercase tracking-wider text-indigo-300 px-1 pt-1">
+                      Semana {wk} {wk === 1 ? '(Inicio)' : ''}
+                    </div>
+
+                    <div className="space-y-1.5">
+                      {weekClasses.map((c) => (
+                        <div
+                          key={c.classNumber}
+                          className="p-2.5 rounded-xl bg-slate-950/70 border border-slate-800/80 flex items-center justify-between text-xs"
+                        >
+                          <div className="flex items-center gap-2.5">
+                            <span
+                              className={`w-6 h-6 rounded-lg flex items-center justify-center font-bold text-[11px] ${
+                                c.classNumber === 1
+                                  ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
+                                  : 'bg-indigo-600/20 text-indigo-300'
+                              }`}
+                            >
+                              #{c.classNumber}
+                            </span>
+                            <span className="font-semibold text-slate-200">
+                              {formatFriendlyDate(c.scheduledDate)}
+                            </span>
+                          </div>
+                          <span className="text-[10px] text-slate-400">
+                            {c.dayName} {scheduleTime ? `• ${scheduleTime}` : ''}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                  <span className="text-[10px] text-slate-400">
-                    Semana {c.weekNumber} {scheduleTime ? `• ${scheduleTime}` : ''}
-                  </span>
-                </div>
-              ))}
+                );
+              })}
             </div>
 
             {/* Semana 5 Reposición */}
-            <div className="p-3 rounded-2xl bg-amber-500/10 border border-amber-500/25 text-amber-200 space-y-1">
-              <div className="flex items-center gap-1.5 font-semibold text-xs text-amber-300">
-                <Info className="w-3.5 h-3.5" />
-                <span>Semana 5: Reposición</span>
+            <div className="p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/25 text-amber-200 space-y-1 mt-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-1.5 font-bold text-xs text-amber-300">
+                  <Info className="w-3.5 h-3.5" />
+                  <span>Semana 5: Reposición</span>
+                </div>
+                <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 font-semibold">
+                  Semana 5 de 5
+                </span>
               </div>
-              <p className="text-[11px] text-amber-200/90 leading-tight">
-                Del {formatFriendlyDate(cycleLimits.startWeek5Reposicion)} al{' '}
-                {formatFriendlyDate(cycleLimits.endWeek5Reposicion)}. Solo se usará si se cancela o pospone alguna clase.
+              <p className="text-[11px] text-amber-200/90 leading-tight pt-1">
+                Del <strong>{formatFriendlyDate(cycleLimits.startWeek5Reposicion)}</strong> al{' '}
+                <strong>{formatFriendlyDate(cycleLimits.endWeek5Reposicion)}</strong>.
+                Solo se activará si se cancela alguna clase de las primeras 4 semanas.
               </p>
             </div>
           </div>

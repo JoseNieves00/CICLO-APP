@@ -117,28 +117,40 @@ export function generateCycleSchedule(
   frequency: 1 | 2,
   scheduleDays: number[]
 ): GeneratedClassDate[] {
-  if (!startDateStr || !scheduleDays.length) return [];
+  if (!startDateStr) return [];
 
-  // Ordenar días de la semana de lunes a domingo
-  const sortedDays = [...scheduleDays].sort((a, b) => a - b);
+  // El día de inicio de la fecha seleccionada siempre es el punto de partida (Clase 1)
+  const startDayOfWeek = getIsoDayOfWeek(startDateStr);
+
+  // Asegurar que el día de inicio de startDateStr esté incluido en los días activos
+  let activeDays = [...(scheduleDays || [])];
+  if (!activeDays.includes(startDayOfWeek)) {
+    if (frequency === 1 || planClasses === 4) {
+      activeDays = [startDayOfWeek];
+    } else {
+      activeDays = [startDayOfWeek, ...activeDays.filter((d) => d !== startDayOfWeek)].slice(0, 2);
+    }
+  }
+
+  // Ordenar días de la semana
+  activeDays.sort((a, b) => a - b);
   const results: GeneratedClassDate[] = [];
 
   const [sy, sm, sd] = startDateStr.split('-').map(Number);
   const currentDate = new Date(sy, sm - 1, sd);
 
-  // Buscamos las clases repartidas en las 4 semanas
   let classCounter = 1;
   const maxClasses = planClasses;
 
-  // Recorremos día a día hasta completar las clases
-  // con límite de seguridad de 35 días (5 semanas)
+  // Recorremos día a día hasta completar las clases del ciclo (4 u 8 clases)
+  // El offset 0 corresponde exactamente al día de inicio startDateStr (Clase 1)
   for (let offset = 0; offset < 35 && classCounter <= maxClasses; offset++) {
     const checkDate = new Date(currentDate);
     checkDate.setDate(currentDate.getDate() + offset);
 
     const checkDayOfWeek = checkDate.getDay() === 0 ? 7 : checkDate.getDay();
 
-    if (sortedDays.includes(checkDayOfWeek)) {
+    if (activeDays.includes(checkDayOfWeek)) {
       const y = checkDate.getFullYear();
       const m = String(checkDate.getMonth() + 1).padStart(2, '0');
       const d = String(checkDate.getDate()).padStart(2, '0');

@@ -78,3 +78,4 @@ export function buildWhatsAppUrl(phone: string | null | undefined, message: stri
 
   return `https://wa.me/${cleanPhone}?text=${encodeURIComponent(message)}`;
 }
+
